@@ -1,0 +1,32 @@
+/* ShopSelection.css */
+.shop-selection-container {
+    padding: 20px;
+    text-align: center;
+}
+
+.shop-list {
+    list-style: none;
+    padding: 0;
+    margin: 20px 0;
+}
+
+.shop-item {
+    margin: 10px 0;
+}
+
+.shop-item a {
+    text-decoration: none;
+    color: #0F67B1;
+    font-size: 18px;
+    font-weight: bold;
+    display: inline-block;
+    padding: 10px 20px;
+    border: 1px solid #0F67B1;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+}
+
+.shop-item a:hover {
+    background-color: #0F67B1;
+    color: white;
+}

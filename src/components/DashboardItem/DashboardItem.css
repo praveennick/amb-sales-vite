@@ -1,0 +1,102 @@
+.dashboard-item-container {
+    background-color: #f9f9f9;
+    width: 100%;
+    padding: 30px;
+    border: 1px solid lightgray;
+    border-radius: 8px;
+    box-sizing: border-box;
+    position: relative;
+    max-width: 100%;
+    overflow: hidden;
+}
+
+.dashboard-item-header {
+    display: flex;
+    align-items: center;
+}
+
+.dashboard-item-title {
+    text-align: start;
+    font-weight: 600;
+    font-size: 25px;
+    display: flex;
+    width: 100%;
+    justify-content: flex-start;
+    margin-left: 12px;
+}
+
+.dashboard-item-chart {
+    margin-top: 10px;
+    width: 100%;
+    max-width: 350px;
+}
+
+.total-amount {
+    font-size: 16px;
+    margin-top: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.percentage-change {
+    margin-left: 10px;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+}
+
+.percentage-change.up {
+    color: #28a745;
+}
+
+.percentage-change.down {
+    color: #dc3545;
+}
+
+.percentage-change i {
+    margin-right: 4px;
+}
+
+/* Styling for the background of the amount */
+.amount-bg {
+    background-color: #e0e0e0;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: bold;
+    font-size: 15px;
+}
+
+
+.card-dropdown {
+    margin: 10px 0;
+    display: flex;
+    align-items: center;
+}
+
+.dropdown-select {
+    margin-left: 10px;
+    padding: 5px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+
+@media (max-width: 768px) {
+    .dashboard-item-container {
+        width: 100%;
+        padding: 20px;
+        border-radius: 8px;
+        border: 1px solid lightgray;
+        box-sizing: border-box;
+    }
+
+    .dashboard-item-title {
+        font-size: 25px;
+    }
+
+    .dashboard-item-chart {
+        margin-top: 10px;
+        width: 100%;
+    }
+}

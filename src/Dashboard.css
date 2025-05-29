@@ -1,0 +1,258 @@
+.app-title {
+    padding: 20px 0;
+    font-size: 32px;
+    font-weight: bold;
+}
+
+.dashboard-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    padding-bottom: 20px;
+    min-height: calc(100vh - 60px);
+    /* Ensure full height minus navbar */
+    box-sizing: border-box;
+}
+
+.loading,
+.no-data {
+    font-size: 18px;
+    text-align: center;
+    margin: 20px 0;
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* Centers the loading or no-data message */
+    height: 100%;
+}
+
+.chart-container {
+    margin: 10px auto;
+    width: 99%;
+    max-width: 600px;
+    background-color: #f8f8f8;
+    border-radius: 5px;
+    /* box-shadow: rgba(60, 64, 67, 0.3) 0px 1px 2px 0px, rgba(60, 64, 67, 0.15) 0px 2px 6px 2px; */
+    /* border: 1px solid lightgray; */
+    padding-top: 10px;
+    padding-bottom: 20px;
+}
+
+.chart-title {
+    font-size: 20px;
+    font-weight: bold;
+    margin: 10px auto;
+}
+
+.total-amount {
+    font-size: 16px;
+    margin-top: 10px;
+    text-align: left;
+    margin-left: 10px;
+}
+
+.today-report {
+    margin: 0px auto 20px auto;
+    padding: 1px 20px 20px 20px;
+    width: 80%;
+    max-width: 600px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.report-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid #ddd;
+}
+
+.report-item:last-child {
+    border-bottom: none;
+}
+
+.report-store-name {
+    font-weight: bold;
+    color: #333;
+}
+
+.report-amount {
+    color: #ff5722;
+    font-weight: bold;
+}
+
+.report-total {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    margin-top: 10px;
+    border-top: 2px solid #000;
+    font-weight: bold;
+}
+
+.loading,
+.no-data {
+    font-size: 18px;
+    text-align: center;
+    margin: 20px 0;
+}
+
+.range-report {
+    margin: 25px auto;
+    padding: 20px;
+    width: 80%;
+    max-width: 600px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.report-type-dropdown {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.dropdown-select {
+    margin-left: 10px;
+    padding: 5px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+    .app-title {
+        font-size: 32px;
+    }
+
+    .total-amount {
+        font-size: 14px;
+    }
+
+    .report-item {
+        font-size: 14px;
+    }
+
+    .report-total {
+        font-size: 16px;
+    }
+
+    .loading,
+    .no-data {
+        font-size: 16px;
+    }
+
+    .range-report {
+        padding: 15px;
+        width: 90%;
+    }
+}
+
+
+.date-picker-container {
+    text-align: center;
+    position: relative;
+    /* Added */
+    /* Ensures the date picker is on top */
+}
+
+
+.CalendarDay__selected_span {
+    background: #82e0aa;
+    color: white;
+    border: 1px solid lightblue;
+}
+
+/* From Uiverse.io by devestter */
+
+.button-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.button {
+    margin: 20px 0;
+    width: 120px;
+    padding: 12px 19px;
+    border: none;
+    color: rgb(16, 52, 170);
+    cursor: pointer;
+    background-color: rgb(190, 219, 253);
+    border-radius: 7px;
+    font-weight: bold;
+    transition: 0.5s;
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    font-size: 13px;
+    box-shadow: rgba(150, 143, 143, 0.2) 0px 2px 8px 0px;
+}
+
+.button:hover {
+    background-color: rgb(164, 206, 253);
+    box-shadow: rgba(0, 0, 0, 0.1) 0px 4px 6px -1px, rgba(0, 0, 0, 0.06) 0px 2px 4px -1px;
+}
+
+.saveicon {
+    width: 17px;
+}
+
+.report-container {
+    display: flex;
+    gap: 12px;
+    background-color: #ffffff;
+    padding: 16px;
+    border-radius: 12px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    justify-content: space-between;
+
+}
+
+.report-dropdown {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+}
+
+.report-dates {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+}
+
+.report-label {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #444;
+}
+
+.report-select,
+.report-date {
+    width: 100%;
+    padding: 12px 14px;
+    font-size: 1rem;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-sizing: border-box;
+}
+
+@media (min-width: 600px) {
+    .report-container {
+        flex-direction: row;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .report-select,
+    .report-date {
+        flex: 1;
+    }
+}

@@ -1,0 +1,117 @@
+.data-submission {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    flex-direction: column;
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+.date-picker {
+    width: 95%;
+}
+
+.data-title {
+    font-size: 24px;
+    font-weight: 600;
+    text-align: left;
+    margin-left: 5px;
+}
+
+.error {
+    color: red;
+    margin-top: 5px;
+    font-size: 12px;
+}
+
+.data-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    width: 60%;
+    background: #ffffff;
+    padding: 20px;
+    border-radius: 10px;
+    /* box-shadow: rgba(0, 0, 0, 0.1) 0px 4px 12px; */
+    border: 1px solid lightgray;
+}
+
+.input-container {
+    display: flex;
+    flex-direction: column;
+}
+
+.input-container label {
+    margin-bottom: 5px;
+    font-weight: 500;
+    color: #333;
+    text-align: left;
+}
+
+.inputbox {
+    font-size: 14px;
+    padding: 15px 10px;
+    background: #F4F4F4;
+    border: none;
+    outline: none;
+    border-radius: 12px;
+}
+
+.inputbox:focus {
+    border: 3px solid #9A9FA5;
+    background: #FFFFFF;
+}
+
+.submit-btn {
+    padding: 12px 20px;
+    background-color: #2d79f3;
+    color: white;
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: 5px;
+    margin-top: 20px;
+    align-self: center;
+    transition: background-color 0.3s ease;
+}
+
+.submit-btn:hover {
+    background-color: #1a5bbf;
+}
+
+@media screen and (max-width: 768px) {
+
+
+    .data-title {
+        font-size: 25px;
+        text-align: left;
+        margin-top: 20px;
+        font-weight: 600;
+    }
+
+    .data-form {
+        width: 90%;
+        padding: 15px;
+    }
+
+    .inputbox {
+        font-size: 14px;
+        padding: 15px 10px;
+        background: #F4F4F4;
+        border: none;
+        border-radius: 12px;
+    }
+
+    .inputbox:focus {
+        border: 3px solid #9A9FA5;
+        background: #FFFFFF;
+        outline: none;
+    }
+
+    .submit-btn {
+        width: 100%;
+        padding: 12px;
+        font-size: 14px;
+    }
+}
