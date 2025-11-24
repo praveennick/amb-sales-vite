@@ -163,7 +163,7 @@ const DataSubmission = ({ shopName }) => {
             <input
               type="date"
               id="date"
-              className="inputbox"
+              className="inputbox w-full"
               value={moment(selectedDate).format("YYYY-MM-DD")}
               onChange={(e) => handleDateChange(new Date(e.target.value))}
             />

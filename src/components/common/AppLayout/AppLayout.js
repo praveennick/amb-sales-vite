@@ -69,6 +69,13 @@ const AppLayout = ({ user, handleLogout, fallbackImage }) => {
                                         </Link>
                                     </li>
                                 </AdminLink>
+                                <AdminLink user={user}>
+                                    <li>
+                                        <Link to="/inventory" onClick={toggleSidebar}>
+                                            Inventory
+                                        </Link>
+                                    </li>
+                                </AdminLink>
                                 <li style={{ marginTop: '40px' }}>
                                     <button
                                         onClick={handleLogout}

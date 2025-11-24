@@ -14,6 +14,7 @@ import { ToastContainer } from "react-toastify";
 import useInactivityTimeout from "./components/common/useInactivityTimeout";
 import JsonDataSubmission from "./JsonDataSubmission";
 import DailySpends from "./DailySpends";
+import InventoryPage from "./InventoryPage";
 
 const App = () => {
   const [user, setUser] = useState(null);
@@ -128,6 +129,7 @@ const App = () => {
               </ProtectedRoute>
             }
           />
+          <Route path="/inventory" element={<InventoryPage />} />
 
           {/* Catch-all for undefined routes */}
           <Route path="*" element={<Navigate to="/login" />} />
