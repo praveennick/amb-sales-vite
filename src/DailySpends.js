@@ -331,7 +331,7 @@ const DailySpends = () => {
 
     return (
         <div style={mobileStyles.container}>
-            <div style={mobileStyles.header}>Daily Spends</div>
+            <div style={mobileStyles.header}></div>
             <form onSubmit={handleSubmit} style={mobileStyles.form}>
                 <input
                     type="date"

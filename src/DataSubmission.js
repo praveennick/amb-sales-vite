@@ -154,7 +154,7 @@ const DataSubmission = ({ shopName }) => {
 
   return (
     <>
-      <div className="data-title">{shopName}</div>
+      <div className="data-title"></div>
       <div className="data-submission">
         <form onSubmit={handleSubmit} className="data-form">
 

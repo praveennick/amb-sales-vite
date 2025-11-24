@@ -516,9 +516,9 @@ const Dashboard = () => {
 
   return (
     <>
-      <div className="app-title">Dashboard</div>
+      <div className="app-title"></div>
       {/* Dropdown for selecting report type */}
-      <div className="report-container">
+      <div className="report-container mb-4">
         <div className="report-dropdown">
           <label className="report-label">Select Report</label>
           <select
@@ -545,29 +545,11 @@ const Dashboard = () => {
             className="report-date"
           />
         </div>
+        {data.length > 0 && <button className="button-container bg-[#3B82F6] text-white p-3 rounded-md flex items-center justify-center gap-2 font-bold" onClick={downloadReport}>
+          <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor"><path d="M480-320 280-520l56-58 104 104v-326h80v326l104-104 56 58-200 200ZM240-160q-33 0-56.5-23.5T160-240v-120h80v120h480v-120h80v120q0 33-23.5 56.5T720-160H240Z" /></svg> Download
+        </button>}
       </div>
 
-      {data.length > 0 && (
-        <div className="button-container">
-          <button className="button" onClick={downloadReport}>
-            <svg
-              className="saveicon"
-              stroke="currentColor"
-              stroke-width="1.7"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5m8.25 3v6.75m0 0l-3-3m3 3l3-3M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z"
-                stroke-linejoin="round"
-                stroke-linecap="round"
-              ></path>
-            </svg>
-            download
-          </button>
-        </div>
-      )}
       {loading ? (
         <LoadingSpinner />
       ) : data.length === 0 ? (
