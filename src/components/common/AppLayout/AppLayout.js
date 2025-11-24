@@ -14,11 +14,9 @@ const AppLayout = ({ user, handleLogout, fallbackImage }) => {
             {user && (
                 <>
                     <div className="navbar">
-                        <i
-                            className={`fa-solid ${sidebarOpen ? "fa-xmark" : "fa-bars"} hamburger`}
-                            style={{ color: 'grey' }}
-                            onClick={toggleSidebar}
-                        ></i>
+                        <span className="material-symbols-outlined hamburger" onClick={toggleSidebar}>
+                            {sidebarOpen ? "close" : "dehaze"}
+                        </span>
                         <div className="user-info">
                             <img src={user.photoURL ? user.photoURL : fallbackImage} alt="User" className="user-image" />
                         </div>

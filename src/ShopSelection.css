@@ -30,3 +30,11 @@
     background-color: #0F67B1;
     color: white;
 }
+
+.welcome-text {
+    font-size: 18px;
+    font-weight: 600;
+    color: #444;
+    margin-bottom: 10px;
+    text-align: center;
+}
