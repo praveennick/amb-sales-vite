@@ -18,7 +18,8 @@ const Dashboard = () => {
   const [focusedInput, setFocusedInput] = useState(null);
   const [loading, setLoading] = useState(true);
   const [reportType, setReportType] = useState("Last 7 days"); // State for dropdown selection
-  const [individualReportType, setIndividualReportType] = useState("Last 7 days"); // State for the new DashboardItem dropdown
+  const [individualReportType, setIndividualReportType] =
+    useState("Last 7 days"); // State for the new DashboardItem dropdown
   const [individualData, setIndividualData] = useState([]); // Data for the new DashboardItem
   const [individualTotal, setIndividualTotal] = useState(0); // Total for the individual report
   const [totalReport, setTotalReport] = useState({
@@ -64,7 +65,11 @@ const Dashboard = () => {
           end = moment().endOf("week");
       }
 
-      const shops = ["The Juice Hut", "Bubble Tea N Cotton Candy", "Coffee N Candy"];
+      const shops = [
+        "The Juice Hut",
+        "Bubble Tea N Cotton Candy",
+        "Coffee N Candy",
+      ];
       const allData = [];
       let total = 0;
       let currentDate = moment(start);
@@ -105,9 +110,15 @@ const Dashboard = () => {
   const fetchPreviousData = async () => {
     if (!user) return;
 
-    const shops = ["The Juice Hut", "Bubble Tea N Cotton Candy", "Coffee N Candy"];
+    const shops = [
+      "The Juice Hut",
+      "Bubble Tea N Cotton Candy",
+      "Coffee N Candy",
+    ];
     const yesterday = moment().subtract(1, "days").format("DD-MM-YYYY");
-    const dayBeforeYesterday = moment().subtract(2, "days").format("DD-MM-YYYY");
+    const dayBeforeYesterday = moment()
+      .subtract(2, "days")
+      .format("DD-MM-YYYY");
 
     const yesterdayData = {
       "The Juice Hut": 0,
@@ -135,10 +146,17 @@ const Dashboard = () => {
         }
 
         // Fetch the day before yesterday's data
-        const beforeYesterdayDocRef = doc(db, "shops", shop, dayBeforeYesterday, "data");
+        const beforeYesterdayDocRef = doc(
+          db,
+          "shops",
+          shop,
+          dayBeforeYesterday,
+          "data"
+        );
         const beforeYesterdayDocSnap = await getDoc(beforeYesterdayDocRef);
         if (beforeYesterdayDocSnap.exists()) {
-          const totalSale = parseFloat(beforeYesterdayDocSnap.data().totalSale) || 0;
+          const totalSale =
+            parseFloat(beforeYesterdayDocSnap.data().totalSale) || 0;
           beforeYesterdayData[shop] = totalSale;
           beforeYesterdayData.total += totalSale;
         }
@@ -150,7 +168,6 @@ const Dashboard = () => {
       console.error("Error fetching previous data: ", error);
     }
   };
-
 
   const fetchDataForDate = async (shopName, date) => {
     try {
@@ -229,20 +246,12 @@ const Dashboard = () => {
     return ((current - previous) / previous) * 100;
   };
 
-  const generateChartOptions = (categories, title) => ({
+  const generateChartOptions = (categories, title, originalSeries) => ({
     chart: {
       type: "bar",
       height: 350,
       stacked: true,
       stackType: "100%",
-      zoom: {
-        enabled: true,
-        type: "x",
-        autoScaleYaxis: true,
-      },
-      toolbar: {
-        show: false // Disables the toolbar which includes the download button
-      }
     },
     plotOptions: {
       bar: {
@@ -261,9 +270,27 @@ const Dashboard = () => {
         },
       },
     },
-    yaxis: {
-      title: {
-        // text: 'Amount (₹)'
+    dataLabels: {
+      enabled: true,
+      formatter: function (val, opts) {
+        const seriesIndex = opts.seriesIndex;
+        const dataPointIndex = opts.dataPointIndex;
+        const rawValue = originalSeries[seriesIndex].data[dataPointIndex];
+        return `₹${rawValue.toLocaleString()}`;
+      },
+      style: {
+        fontSize: "12px",
+        colors: ["#fff"],
+      },
+    },
+    tooltip: {
+      y: {
+        formatter: (value, opts) => {
+          const seriesIndex = opts.seriesIndex;
+          const dataPointIndex = opts.dataPointIndex;
+          const rawValue = originalSeries[seriesIndex].data[dataPointIndex];
+          return `₹${rawValue.toLocaleString()}`;
+        },
       },
     },
     fill: {
@@ -272,21 +299,7 @@ const Dashboard = () => {
     legend: {
       position: "bottom",
       horizontalAlign: "center",
-      //   offsetX: 40,
       offsetY: -10,
-    },
-    tooltip: {
-      y: {
-        formatter: (value) => `₹${value.toLocaleString()}`,
-      },
-    },
-    dataLabels: {
-      enabled: true,
-      formatter: (value) => `₹${value.toLocaleString()}`,
-      style: {
-        fontSize: "12px",
-        colors: ["#fff"],
-      },
     },
     title: {
       text: title,
@@ -298,6 +311,7 @@ const Dashboard = () => {
       },
     },
   });
+
 
   const processDataForChart = (data, key) => {
     const groupedData = {};
@@ -348,9 +362,20 @@ const Dashboard = () => {
     remaining: prepareChartData(data, "remaining"),
   };
 
-  const formatNumber = (number) => {
-    return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  const formatNumber = (x) => {
+    if (x == null || isNaN(x)) return "0";
+    const parts = x.toString().split(".");
+    const integerPart = parts[0];
+    const decimalPart = parts[1] ? `.${parts[1]}` : "";
+    const lastThree = integerPart.substring(integerPart.length - 3);
+    const otherNumbers = integerPart.substring(0, integerPart.length - 3);
+    const formatted =
+      otherNumbers.replace(/\B(?=(\d{2})+(?!\d))/g, ",") +
+      (otherNumbers ? "," : "") +
+      lastThree;
+    return formatted + decimalPart;
   };
+
 
   const calculateTotal = (reportData) => {
     return Object.values(reportData).reduce(
@@ -506,7 +531,6 @@ const Dashboard = () => {
           </select>
         </div>
         <div className="report-dates">
-
           <input
             type="date"
             value={startDate.format("YYYY-MM-DD")}
@@ -556,12 +580,19 @@ const Dashboard = () => {
             title={"Yesterday's Sales Report"}
             totalReport={yesterdayReport}
             total={yesterdayReport.total}
-            color={"#FFD88D"}
+            color="#fcca03"
+            icon={<path d="M320-414v-306h120v306l-60-56-60 56Zm200 60v-526h120v406L520-354ZM120-216v-344h120v224L120-216Zm0 98 258-258 142 122 224-224h-64v-80h200v200h-80v-64L524-146 382-268 232-118H120Z" />}
             isYesterdayReport={true} // Pass this prop to conditionally render the report
             beforeYesterdayReport={beforeYesterdayReport} // Pass previous day's report for comparison
           />
 
-          <DashboardItem title={"Selected Date Report"} color={"#b5e4ca"} totalReport={totalReport} total={formatNumber(calculateTotal(totalReport))} />
+          <DashboardItem
+            title={"Selected Date Report"}
+            color="#08cf61"
+            icon={<path d="M441-82Q287-97 184-211T81-480q0-155 103-269t257-129v120q-104 14-172 93t-68 185q0 106 68 185t172 93v120Zm80 0v-120q94-12 159-78t79-160h120q-14 143-114.5 243.5T521-82Zm238-438q-14-94-79-160t-159-78v-120q143 14 243.5 114.5T879-520H759Z" />}
+            totalReport={totalReport}
+            total={formatNumber(calculateTotal(totalReport))}
+          />
           {/* New Individual Report Type Dropdown */}
           {/* <div className="report-type-dropdown">
             <label htmlFor="individualReportType">Select Report for Individual Card: </label>
@@ -586,21 +617,91 @@ const Dashboard = () => {
             stackedColumnOptions={generateChartOptions(individualChartData.categories)}
           /> */}
 
-          <DashboardItem title={"Total Sales"} color={"#CABDFF"} stackedColumnSeries={chartData.totalSales.series} stackedColumnOptions={generateChartOptions(chartData.totalSales.categories, "")} />
+          <DashboardItem
+            title={"Total Sales"}
+            icon={<path d="M200-120q-33 0-56.5-23.5T120-200v-640h80v640h640v80H200Zm40-120v-360h160v360H240Zm200 0v-560h160v560H440Zm200 0v-200h160v200H640Z" />}
+            color={"#6e5db0"}
+            stackedColumnSeries={chartData.totalSales.series}
+            stackedColumnOptions={generateChartOptions(
+              chartData.totalSales.categories,
+              "",
+              chartData.totalSales.series
+            )}
+          />
 
-          <DashboardItem title={"POS Sales"} color={"#FFBC99"} stackedColumnSeries={chartData.posSales.series} stackedColumnOptions={generateChartOptions(chartData.posSales.categories, "")} />
+          <DashboardItem
+            title={"POS Sales"}
+            icon={<path d="M280-640q-33 0-56.5-23.5T200-720v-80q0-33 23.5-56.5T280-880h400q33 0 56.5 23.5T760-800v80q0 33-23.5 56.5T680-640H280Zm0-80h400v-80H280v80ZM160-80q-33 0-56.5-23.5T80-160v-40h800v40q0 33-23.5 56.5T800-80H160ZM80-240l139-313q10-22 30-34.5t43-12.5h376q23 0 43 12.5t30 34.5l139 313H80Zm260-80h40q8 0 14-6t6-14q0-8-6-14t-14-6h-40q-8 0-14 6t-6 14q0 8 6 14t14 6Zm0-80h40q8 0 14-6t6-14q0-8-6-14t-14-6h-40q-8 0-14 6t-6 14q0 8 6 14t14 6Zm0-80h40q8 0 14-6t6-14q0-8-6-14t-14-6h-40q-8 0-14 6t-6 14q0 8 6 14t14 6Zm120 160h40q8 0 14-6t6-14q0-8-6-14t-14-6h-40q-8 0-14 6t-6 14q0 8 6 14t14 6Zm0-80h40q8 0 14-6t6-14q0-8-6-14t-14-6h-40q-8 0-14 6t-6 14q0 8 6 14t14 6Zm0-80h40q8 0 14-6t6-14q0-8-6-14t-14-6h-40q-8 0-14 6t-6 14q0 8 6 14t14 6Zm120 160h40q8 0 14-6t6-14q0-8-6-14t-14-6h-40q-8 0-14 6t-6 14q0 8 6 14t14 6Zm0-80h40q8 0 14-6t6-14q0-8-6-14t-14-6h-40q-8 0-14 6t-6 14q0 8 6 14t14 6Zm0-80h40q8 0 14-6t6-14q0-8-6-14t-14-6h-40q-8 0-14 6t-6 14q0 8 6 14t14 6Z" />}
+            color={"#ed712f"}
+            stackedColumnSeries={chartData.posSales.series}
+            stackedColumnOptions={generateChartOptions(
+              chartData.posSales.categories,
+              "",
+              chartData.posSales.series
+            )}
+          />
 
-          <DashboardItem title={"Cash Sales"} color={"#B1E5FC"} stackedColumnSeries={chartData.cashSales.series} stackedColumnOptions={generateChartOptions(chartData.cashSales.categories, "")} />
+          <DashboardItem
+            title={"Cash Sales"}
+            icon={<path d="M560-440q-50 0-85-35t-35-85q0-50 35-85t85-35q50 0 85 35t35 85q0 50-35 85t-85 35ZM280-320q-33 0-56.5-23.5T200-400v-320q0-33 23.5-56.5T280-800h560q33 0 56.5 23.5T920-720v320q0 33-23.5 56.5T840-320H280Zm80-80h400q0-33 23.5-56.5T840-480v-160q-33 0-56.5-23.5T760-720H360q0 33-23.5 56.5T280-640v160q33 0 56.5 23.5T360-400Zm440 240H120q-33 0-56.5-23.5T40-240v-440h80v440h680v80ZM280-400v-320 320Z" />}
+            color={"#09a7ed"}
+            stackedColumnSeries={chartData.cashSales.series}
+            stackedColumnOptions={generateChartOptions(
+              chartData.cashSales.categories,
+              "",
+              chartData.cashSales.series
+            )}
+          />
 
-          <DashboardItem title={"UPI Sales"} color={"#FFD88D"} stackedColumnSeries={chartData.upiSales.series} stackedColumnOptions={generateChartOptions(chartData.upiSales.categories, "")} />
+          <DashboardItem
+            title={"UPI Sales"}
+            color="#b8124f"
+            icon={
+              <path d="M440-360h60v-80h100q17 0 28.5-11.5T640-480v-80q0-17-11.5-28.5T600-600H440v240Zm240 0h60v-240h-60v240ZM500-500v-40h80v40h-80ZM240-360h120q17 0 28.5-11.5T400-400v-200h-60v180h-80v-180h-60v200q0 17 11.5 28.5T240-360Zm-80 200q-33 0-56.5-23.5T80-240v-480q0-33 23.5-56.5T160-800h640q33 0 56.5 23.5T880-720v480q0 33-23.5 56.5T800-160H160Zm0-80h640v-480H160v480Zm0 0v-480 480Z" />
+            }
+            stackedColumnSeries={chartData.upiSales.series}
+            stackedColumnOptions={generateChartOptions(
+              chartData.upiSales.categories,
+              "",
+              chartData.upiSales.series
+            )}
+          />
 
-          <DashboardItem title={"Card Sales"} color={"#CABDFF"} stackedColumnSeries={chartData.cardSales.series} stackedColumnOptions={generateChartOptions(chartData.cardSales.categories, "")} />
+          <DashboardItem
+            title={"Card Sales"}
+            icon={<path d="M880-720v480q0 33-23.5 56.5T800-160H160q-33 0-56.5-23.5T80-240v-480q0-33 23.5-56.5T160-800h640q33 0 56.5 23.5T880-720Zm-720 80h640v-80H160v80Zm0 160v240h640v-240H160Zm0 240v-480 480Z" />}
+            color={"#bd20ad"}
+            stackedColumnSeries={chartData.cardSales.series}
+            stackedColumnOptions={generateChartOptions(
+              chartData.cardSales.categories,
+              "",
+              chartData.cardSales.series
+            )}
+          />
 
-          <DashboardItem title={"Cash Given"} color={"#b5e4ca"} stackedColumnSeries={chartData.cashGiven.series} stackedColumnOptions={generateChartOptions(chartData.cashGiven.categories, "")} />
+          <DashboardItem
+            title={"Cash Given"}
+            icon={<path d="M531-260h96v-3L462-438l1-3h10q54 0 89.5-33t43.5-77h40v-47h-41q-3-15-10.5-28.5T576-653h70v-47H314v57h156q26 0 42.5 13t22.5 32H314v47h222q-6 20-23 34.5T467-502H367v64l164 178ZM480-80q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q134 0 227-93t93-227q0-134-93-227t-227-93q-134 0-227 93t-93 227q0 134 93 227t227 93Zm0-320Z" />}
+            color={"#20d435"}
+            stackedColumnSeries={chartData.cashGiven.series}
+            stackedColumnOptions={generateChartOptions(
+              chartData.cashGiven.categories,
+              "",
+              chartData.cashGiven.series
+            )}
+          />
 
-          <DashboardItem title={"Remaining"} color={"#FFBC99"} stackedColumnSeries={chartData.remaining.series} stackedColumnOptions={generateChartOptions(chartData.remaining.categories, "")} />
-
-
+          <DashboardItem
+            title={"Remaining"}
+            icon={<path d="M336-120q-91 0-153.5-62.5T120-336q0-38 13-74t37-65l142-171-97-194h530l-97 194 142 171q24 29 37 65t13 74q0 91-63 153.5T624-120H336Zm144-200q-33 0-56.5-23.5T400-400q0-33 23.5-56.5T480-480q33 0 56.5 23.5T560-400q0 33-23.5 56.5T480-320Zm-95-360h190l40-80H345l40 80Zm-49 480h288q57 0 96.5-39.5T760-336q0-24-8.5-46.5T728-423L581-600H380L232-424q-15 18-23.5 41t-8.5 47q0 57 39.5 96.5T336-200Z" />}
+            color={"#f58207"}
+            stackedColumnSeries={chartData.remaining.series}
+            stackedColumnOptions={generateChartOptions(
+              chartData.remaining.categories,
+              "",
+              chartData.remaining.series
+            )}
+          />
         </div>
       )}
     </>

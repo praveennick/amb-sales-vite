@@ -44,7 +44,7 @@ const Login = () => {
       } else if (error.code === "auth/account-exists-with-different-credential") {
         ToastHandler.error("Account exists with a different credential.");
       } else {
-        ToastHandler.error(error.message || "Google sign-in failed.");
+        ToastHandler.error("Google sign-in failed.");
       }
       console.error("Error during sign-in with Google:", error);
     });
@@ -59,7 +59,7 @@ const Login = () => {
       } else if (error.code === "auth/wrong-password") {
         ToastHandler.error("Incorrect password.");
       } else {
-        ToastHandler.error(error.message || "Sign-in failed.");
+        ToastHandler.error("Sign-in failed.");
       }
       console.error("Error during sign-in with Email:", error);
     });

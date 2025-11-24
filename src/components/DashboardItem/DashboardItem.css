@@ -1,102 +1,93 @@
 .dashboard-item-container {
-    background-color: #f9f9f9;
+    background-color: #ffffff;
     width: 100%;
-    padding: 30px;
-    border: 1px solid lightgray;
-    border-radius: 8px;
-    box-sizing: border-box;
-    position: relative;
+    /* padding: 24px; */
+    border-radius: 16px;
+    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.05);
     max-width: 100%;
-    overflow: hidden;
+    box-sizing: border-box;
 }
 
 .dashboard-item-header {
     display: flex;
     align-items: center;
+    margin-bottom: 12px;
 }
 
-.dashboard-item-title {
-    text-align: start;
-    font-weight: 600;
-    font-size: 25px;
-    display: flex;
-    width: 100%;
-    justify-content: flex-start;
-    margin-left: 12px;
+.dashboard-item-icon {
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+    margin-right: 10px;
 }
 
 .dashboard-item-chart {
-    margin-top: 10px;
+    margin-bottom: 16px;
     width: 100%;
     max-width: 350px;
 }
 
-.total-amount {
-    font-size: 16px;
-    margin-top: 10px;
+/* For Yesterday's Report */
+.report-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    margin: 12px 0;
+}
+
+.store-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.store-name {
+    font-size: 14px;
+    color: #6b7280;
+}
+
+.store-value {
+    font-size: 20px;
+    font-weight: 700;
+    color: #111827;
 }
 
 .percentage-change {
-    margin-left: 10px;
-    font-size: 14px;
-    display: flex;
-    align-items: center;
-}
-
-.percentage-change.up {
-    color: #28a745;
-}
-
-.percentage-change.down {
-    color: #dc3545;
-}
-
-.percentage-change i {
-    margin-right: 4px;
-}
-
-/* Styling for the background of the amount */
-.amount-bg {
-    background-color: #e0e0e0;
-    padding: 2px 6px;
-    border-radius: 4px;
-    font-weight: bold;
     font-size: 15px;
-}
-
-
-.card-dropdown {
-    margin: 10px 0;
+    font-weight: 600;
     display: flex;
     align-items: center;
+    gap: 6px;
 }
 
-.dropdown-select {
-    margin-left: 10px;
-    padding: 5px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
+.percentage-change.positive {
+    color: #16a34a;
 }
 
+.percentage-change.negative {
+    color: #dc2626;
+}
 
-@media (max-width: 768px) {
-    .dashboard-item-container {
-        width: 100%;
-        padding: 20px;
-        border-radius: 8px;
-        border: 1px solid lightgray;
-        box-sizing: border-box;
-    }
+.report-total-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid #e5e7eb;
+    margin-top: 20px;
+    padding-top: 14px;
+    font-size: 17px;
+    font-weight: 700;
+    color: #111827;
+}
 
-    .dashboard-item-title {
-        font-size: 25px;
-    }
+.report-total-value {
+    color: #111827;
+}
 
-    .dashboard-item-chart {
-        margin-top: 10px;
-        width: 100%;
-    }
+/* For Non-Yesterday Card View */
+.total-row {
+    display: flex;
+    justify-content: space-between;
+    margin: 6px 0;
+    font-size: 15px;
+    font-weight: 500;
 }
