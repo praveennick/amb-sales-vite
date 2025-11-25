@@ -24,6 +24,7 @@ const App = () => {
     signOut(auth).then(() => {
       setUser(null);
     });
+    window.location.href = "/login";
   };
 
   useEffect(() => {
