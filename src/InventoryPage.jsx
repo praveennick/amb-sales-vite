@@ -704,30 +704,41 @@ const InventoryPage = () => {
 
                         <div className="flex gap-3">
                           {!isEditing ? (
-                            <button
-                              type="button"
-                              className="flex-1 bg-blue-500 text-white text-xs font-semibold py-2 rounded-xl shadow-sm hover:bg-blue-600"
-                              onClick={() => setEditingId(item.id)}
-                            >
-                              Edit
-                            </button>
+                            <>
+                              <button
+                                type="button"
+                                className="flex-1 bg-blue-500 text-white text-xs font-semibold py-2 rounded-xl shadow-sm hover:bg-blue-600"
+                                onClick={() => setEditingId(item.id)}
+                              >
+                                Edit
+                              </button>
+                              <button
+                                type="button"
+                                className="flex-1 bg-red-500 text-white text-xs font-semibold py-2 rounded-xl shadow-sm hover:bg-red-600"
+                                onClick={() => handleDeleteItem(item.id)}
+                              >
+                                Delete
+                              </button>
+                            </>
                           ) : (
-                            <button
-                              type="button"
-                              className="flex-1 bg-green-500 text-white text-xs font-semibold py-2 rounded-xl shadow-sm hover:bg-green-600 disabled:opacity-60"
-                              disabled={savingId === item.id}
-                              onClick={() => handleSaveItem(item)}
-                            >
-                              {savingId === item.id ? "Saving..." : "Save"}
-                            </button>
+                            <>
+                              <button
+                                type="button"
+                                className="flex-1 bg-green-500 text-white text-xs font-semibold py-2 rounded-xl shadow-sm hover:bg-green-600 disabled:opacity-60"
+                                disabled={savingId === item.id}
+                                onClick={() => handleSaveItem(item)}
+                              >
+                                {savingId === item.id ? "Saving..." : "Save"}
+                              </button>
+                              <button
+                                type="button"
+                                className="flex-1 bg-red-500 text-white text-xs font-semibold py-2 rounded-xl shadow-sm hover:bg-red-600"
+                                onClick={() => setEditingId(null)}
+                              >
+                                Cancel
+                              </button>
+                            </>
                           )}
-                          <button
-                            type="button"
-                            className="flex-1 bg-red-500 text-white text-xs font-semibold py-2 rounded-xl shadow-sm hover:bg-red-600"
-                            onClick={() => handleDeleteItem(item.id)}
-                          >
-                            Delete
-                          </button>
                         </div>
                       </div>
                     </details>
