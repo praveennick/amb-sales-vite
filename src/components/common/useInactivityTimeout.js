@@ -1,30 +1,36 @@
 import { useEffect } from "react";
-
-const useInactivityTimeout = (handleLogout, onTimeoutCallback, timeout = 1200000) => {
-    useEffect(() => {
-        let timeoutId;
-
-        const resetTimeout = () => {
-            if (timeoutId) clearTimeout(timeoutId);
-            timeoutId = setTimeout(() => {
-                handleLogout();
-                onTimeoutCallback(); // Invoke the callback to handle navigation
-            }, timeout);
-        };
-
-        const handleActivity = () => resetTimeout();
-
-        window.addEventListener("mousemove", handleActivity);
-        window.addEventListener("keydown", handleActivity);
-
-        resetTimeout();
-
-        return () => {
-            clearTimeout(timeoutId);
-            window.removeEventListener("mousemove", handleActivity);
-            window.removeEventListener("keydown", handleActivity);
-        };
-    }, [handleLogout, onTimeoutCallback, timeout]);
-};
-
-export default useInactivityTimeout;
+export default function useInactivityTimeout(
+  logout,
+  enabled,
+  timeout = 1200000,
+) {
+  useEffect(() => {
+    if (!enabled) return;
+    let lastActivity = Date.now();
+    const recordActivity = () => {
+      lastActivity = Date.now();
+    };
+    const events = [
+      "pointerdown",
+      "pointermove",
+      "keydown",
+      "touchstart",
+      "scroll",
+    ];
+    events.forEach((event) =>
+      window.addEventListener(event, recordActivity, { passive: true }),
+    );
+    const interval = window.setInterval(() => {
+      if (Date.now() - lastActivity >= timeout) {
+        lastActivity = Date.now();
+        void logout();
+      }
+    }, 1000);
+    return () => {
+      window.clearInterval(interval);
+      events.forEach((event) =>
+        window.removeEventListener(event, recordActivity),
+      );
+    };
+  }, [logout, enabled, timeout]);
+}

@@ -7,34 +7,35 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "node --test tests/unit/*.test.js",
+    "test:e2e": "playwright test",
+    "test:production": "npm run build && playwright test --config playwright.production.config.js",
+    "format": "prettier --write \"src/**/*.{js,jsx,css}\" tests *.js *.html package.json README.md"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.8",
-    "apexcharts": "^4.7.0",
     "firebase": "^11.8.1",
-    "lodash": "^4.17.21",
-    "moment": "^2.30.1",
     "react": "^19.1.0",
-    "react-apexcharts": "^1.7.0",
-    "react-datepicker": "^8.4.0",
     "react-dom": "^19.1.0",
-    "react-firebase-hooks": "^5.1.1",
     "react-icons": "^5.5.0",
     "react-router-dom": "^7.6.1",
     "react-toastify": "^11.0.5",
     "tailwindcss": "^4.1.8",
-    "xlsx": "^0.18.5"
+    "write-excel-file": "^4.1.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.25.0",
+    "@playwright/test": "^1.63.0",
     "@types/react": "^19.1.2",
     "@types/react-dom": "^19.1.2",
     "@vitejs/plugin-react": "^4.4.1",
     "eslint": "^9.25.0",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.19",
+    "fflate": "^0.8.3",
     "globals": "^16.0.0",
+    "prettier": "^3.9.6",
     "vite": "^6.3.5",
     "vite-plugin-qrcode": "^0.2.4"
   }
