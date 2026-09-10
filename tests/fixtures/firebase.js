@@ -30,6 +30,19 @@ export async function signInWithEmailAndPassword() {
   listeners.forEach((listener) => listener(getUser()));
 }
 export const signInWithPopup = signInWithEmailAndPassword;
+export async function grantAdminByEmail(email) {
+  await wait();
+  if (email === "missing@example.com") {
+    const error = new Error("No user");
+    error.code = "functions/not-found";
+    throw error;
+  }
+  const reference = "admins/another-user";
+  const data = { active: true, email };
+  store.set(reference, data);
+  window.__testWrites.push({ reference, data });
+  roleListeners.forEach((notify) => notify());
+}
 const path = (_db, ...parts) => parts.join("/");
 export const doc = path,
   collection = path;
@@ -51,8 +64,8 @@ export async function getDoc(reference) {
   const date = reference.split("/")[2];
   const current = date === documentDate(localDate());
   const data =
-    saved ||
-    (current
+    (store.has(reference) ? saved : undefined) ||
+    (current && !store.has(reference)
       ? {
           totalSale: 1250,
           posSale: 1200,
@@ -100,6 +113,7 @@ export async function setDoc(reference, data) {
   await wait();
   store.set(reference, data);
   window.__testWrites.push({ reference, data });
+  roleListeners.forEach((notify) => notify());
 }
 export async function addDoc(reference, data) {
   await wait();
@@ -122,11 +136,48 @@ export async function updateDoc(reference, data) {
 }
 export async function deleteDoc(reference) {
   await wait();
-  const key = reference.slice(0, reference.lastIndexOf("/")),
-    id = reference.split("/").at(-1);
-  store.set(
-    key,
-    store.get(key).filter((item) => item.id !== id),
-  );
+  if (reference.startsWith("shops/") || reference.startsWith("admins/")) {
+    store.set(reference, null);
+  } else {
+    const key = reference.slice(0, reference.lastIndexOf("/")),
+      id = reference.split("/").at(-1);
+    store.set(
+      key,
+      store.get(key).filter((item) => item.id !== id),
+    );
+  }
+  roleListeners.forEach((notify) => notify());
   window.__testWrites.push({ reference });
+}
+
+const roleListeners = new Set();
+export function onSnapshot(reference, next) {
+  const notify = () => {
+    const initial =
+      localStorage.getItem("test-role") !== "staff"
+        ? { active: true, email: "admin@abc.com" }
+        : null;
+    const own = store.has("admins/test-user")
+      ? store.get("admins/test-user")
+      : initial;
+    if (reference === "admins") {
+      const entries = new Map([
+        ["admins/test-user", own],
+        ...[...store].filter(([key]) => key.startsWith("admins/")),
+      ]);
+      next({
+        docs: [...entries]
+          .filter(([, value]) => value)
+          .map(([key, value]) => ({
+            id: key.split("/")[1],
+            data: () => value,
+          })),
+      });
+    } else next({ exists: () => Boolean(own), data: () => own });
+  };
+  roleListeners.add(notify);
+  queueMicrotask(() => {
+    if (roleListeners.has(notify)) notify();
+  });
+  return () => roleListeners.delete(notify);
 }

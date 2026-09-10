@@ -14,6 +14,7 @@ const ShopSelection = lazy(() => import("./pages/ShopSelection"));
 const DataSubmission = lazy(() => import("./pages/SalesSubmission"));
 const DailySpends = lazy(() => import("./pages/DailySpends"));
 const InventoryPage = lazy(() => import("./pages/Inventory"));
+const AdminAccess = lazy(() => import("./pages/AdminAccess"));
 const Records = lazy(() => import("./pages/SalesRecords"));
 function Home() {
   const { user, loading, isAdmin } = useAuth();
@@ -62,6 +63,7 @@ export default function App() {
                     />
                   ))}
                   <Route element={<ProtectedRoute adminOnly />}>
+                    <Route path="/admin-access" element={<AdminAccess />} />
                     <Route path="/dashboard" element={<Dashboard />} />
                     <Route path="/expenses" element={<DailySpends />} />
                     <Route path="/inventory" element={<InventoryPage />} />

@@ -1,0 +1,31 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function admin() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+        && get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.active == true;
+    }
+    match /admins/{uid} {
+      allow get: if signedIn() && (request.auth.uid == uid || admin());
+      allow list: if admin();
+      // Grants are made only by the callable function after Authentication lookup.
+      allow create, update: if false;
+      allow delete: if admin() && uid != request.auth.uid;
+    }
+    match /shops/{store}/{date}/data {
+      allow read, delete: if admin();
+      // Staff retain the existing ability to submit/replace daily store sales.
+      allow create, update: if signedIn()
+        && store in ['The Juice Hut', 'Bubble Tea N Cotton Candy', 'Coffee N Candy']
+        && request.resource.data.shopName == store;
+    }
+    match /dailySpends/{date}/spends/{id} {
+      allow read, write: if admin();
+    }
+    match /inventory/{store}/items/{id} {
+      allow read, write: if admin();
+    }
+  }
+}

@@ -7,6 +7,7 @@ export {
   collection,
   doc,
   getDoc,
+  onSnapshot,
   getDocs,
   setDoc,
   addDoc,

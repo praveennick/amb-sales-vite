@@ -1,7 +1,15 @@
 import DateField from "../components/common/DateField";
-import { FaRegFileAlt, FaSyncAlt } from "react-icons/fa";
+import { FaRegFileAlt, FaSyncAlt, FaTrashAlt } from "react-icons/fa";
 import { useEffect, useState } from "react";
-import { localDate, currency, displayTimestamp } from "../lib/format";
+import {
+  localDate,
+  currency,
+  displayTimestamp,
+  displayDate,
+  documentDate,
+} from "../lib/format";
+import { useAuth } from "../context/auth";
+import { db, doc, deleteDoc } from "../services/firebaseDb";
 import { shops } from "../lib/shops";
 import { readSales } from "../services/reports";
 import LoadingSpinner from "../components/common/LoadingSpinner/LoadingSpinner";
@@ -26,6 +34,10 @@ const fields = [
   "submittedBy",
 ];
 export default function SalesRecords() {
+  const { isAdmin } = useAuth();
+  const [deleting, setDeleting] = useState(null);
+  const [deleteError, setDeleteError] = useState("");
+  const [notice, setNotice] = useState("");
   const [date, setDate] = useState(localDate),
     [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true),
@@ -50,6 +62,39 @@ export default function SalesRecords() {
       cancelled = true;
     };
   }, [date, revision]);
+  async function removeRecord(record) {
+    if (!isAdmin || deleting) return;
+    const recordDate = record.isoDate;
+    if (
+      !window.confirm(
+        `Delete sales for ${record.shopName} on ${displayDate(recordDate)}? This permanently deletes this daily record and cannot be undone.`,
+      )
+    )
+      return;
+    setDeleting(record.shopName);
+    setDeleteError("");
+    setNotice("");
+    try {
+      await deleteDoc(
+        doc(db, "shops", record.shopName, documentDate(recordDate), "data"),
+      );
+      setRecords((previous) =>
+        previous.filter(
+          (item) =>
+            item.shopName !== record.shopName || item.isoDate !== recordDate,
+        ),
+      );
+      setNotice(
+        `Sales for ${record.shopName} on ${displayDate(recordDate)} were deleted.`,
+      );
+    } catch {
+      setDeleteError(
+        "Could not delete the sales record. Check your connection and admin permissions, then try again.",
+      );
+    } finally {
+      setDeleting(null);
+    }
+  }
   return (
     <div className="space-y-6">
       <div className="page-hero">
@@ -70,6 +115,7 @@ export default function SalesRecords() {
             className="min-w-0"
             value={date}
             required
+            disabled={Boolean(deleting)}
             onChange={(event) => {
               if (event.target.value) setDate(event.target.value);
             }}
@@ -77,12 +123,22 @@ export default function SalesRecords() {
         </label>
         <button
           className="btn-secondary"
-          disabled={loading}
+          disabled={loading || Boolean(deleting)}
           onClick={() => setRevision((value) => value + 1)}
         >
           <FaSyncAlt aria-hidden="true" /> Refresh
         </button>
       </div>
+      {deleteError && (
+        <p role="alert" className="panel text-red-700">
+          {deleteError}
+        </p>
+      )}
+      {notice && (
+        <p role="status" className="panel text-emerald-700">
+          {notice}
+        </p>
+      )}
       {error ? (
         <div role="alert" className="panel text-red-700">
           {error}
@@ -130,6 +186,20 @@ export default function SalesRecords() {
                         </div>
                       ))}
                     </dl>
+                    {isAdmin && (
+                      <button
+                        type="button"
+                        className="btn-secondary mt-5 w-full text-red-700 hover:bg-red-50"
+                        aria-label={`Delete sales for ${shop.name}`}
+                        disabled={Boolean(deleting)}
+                        onClick={() => removeRecord(record)}
+                      >
+                        <FaTrashAlt aria-hidden="true" />
+                        {deleting === shop.name
+                          ? "Deleting…"
+                          : "Delete sales record"}
+                      </button>
+                    )}
                   </>
                 ) : (
                   <p className="py-8 text-sm text-slate-500">

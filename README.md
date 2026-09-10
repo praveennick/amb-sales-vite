@@ -39,7 +39,7 @@ Sales saves still replace the existing record for the selected shop and date. Ca
 
 Dashboard reads use eight concurrent requests, deduplicate overlapping dates, debounce changes, stop queued work on navigation, and reject ranges over 366 days. Expense dates within the same month reuse loaded data; successful mutations update local results without fetching the month again. Refresh retrieves current server data. The existing date-subcollection schema still requires per-day reads; this refactor does not migrate stored data.
 
-Dashboard, expenses, inventory, and sales records require an admin session. `src/adminEmails.js` retains the existing admin list. Client-side route checks complement Firestore Security Rules; backend rules were not available in this repository and were not changed.
+Dashboard, expenses, inventory, sales records, and admin management require an admin role stored in Firestore. Follow [Firebase admin setup](docs/admin-access.md) before deploying this frontend. The first admin must be bootstrapped in Firebase; subsequent access is managed in the app. Sales records include confirmed deletion per store and date.
 
 The unused component that automatically imported JSON on mount was removed. `src/csvjson.json` is retained unchanged and is not loaded or submitted by the application.
 

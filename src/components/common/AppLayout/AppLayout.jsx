@@ -2,6 +2,7 @@ import { Suspense, useEffect, useRef, useState } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import {
   FaBars,
+  FaUserShield,
   FaTimes,
   FaStore,
   FaChartBar,
@@ -28,6 +29,7 @@ export default function AppLayout() {
     ...shops.map((shop) => ({ ...shop, Icon: FaStore })),
     ...(isAdmin
       ? [
+          { path: "/admin-access", name: "Admin access", Icon: FaUserShield },
           { path: "/expenses", name: "Expenses", Icon: FaReceipt },
           { path: "/inventory", name: "Inventory", Icon: FaBoxes },
           { path: "/sales-records", name: "Sales records", Icon: FaRegFileAlt },
