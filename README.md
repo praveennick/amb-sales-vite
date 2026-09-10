@@ -25,7 +25,7 @@ On Windows with PowerShell script restrictions, use `npm.cmd` instead of `npm`.
 
 JSX uses `.jsx` files, so Vite no longer needs a custom JSX loader for `.js` files. Pages load on demand through React lazy/Suspense; database and Excel code are excluded from the initial login bundle. The chart UI uses SVG with Tailwind classes and accessible exact-value tables. The colorful theme combines dark indigo navigation, violet/cyan gradients, tinted summary cards, and section/action icons.
 
-Visible dates use `DD MM YY`; the shared date field preserves native calendar selection while preventing Safari's native date text from stretching the layout. Chart labels include short weekdays (Mon, Tue, etc.). Whole currency amounts omit `.00`; real fractional amounts remain visible. Exports follow the same date and currency presentation.
+Visible dates use `DD/MM/YY`; the shared date field preserves native calendar selection while preventing Safari's native date text from stretching the layout. Chart labels include short weekdays (Mon, Tue, etc.). Whole currency amounts omit `.00`; real fractional amounts remain visible. Exports follow the same date and currency presentation.
 
 ## Behavior and data compatibility
 
@@ -35,7 +35,7 @@ Existing URLs and Firestore paths are preserved:
 - Expenses: `dailySpends/{DD-MM-YYYY}/spends/{id}`.
 - Inventory: `inventory/{shopName}/items/{id}`.
 
-Sales saves still replace the existing record for the selected shop and date. Cash is notes + expenses − counter cash; total sales are cash + UPI + card. “Sales outside POS” means collected money for sales not entered into the billing system: `max(total sales − POS sales, 0)`. If POS exceeds collections, the difference appears separately as “POS shortfall.” Reports calculate these amounts per shop and day from the source totals, so stale stored differences do not mislabel collections. The signed `remaining` field is preserved for storage compatibility; existing database records are not rewritten. Monetary values round to two decimal places internally. Inventory Cancel discards draft changes.
+Sales saves still replace the existing record for the selected shop and date. Cash is notes + expenses − counter cash; total sales are cash + UPI + card. Difference from POS is the signed difference: total sales minus POS sales. Reports and exports retain the stored remaining field. Existing database records are not rewritten. Monetary values round to two decimal places internally. Inventory Cancel discards draft changes.
 
 Dashboard reads use eight concurrent requests, deduplicate overlapping dates, debounce changes, stop queued work on navigation, and reject ranges over 366 days. Expense dates within the same month reuse loaded data; successful mutations update local results without fetching the month again. Refresh retrieves current server data. The existing date-subcollection schema still requires per-day reads; this refactor does not migrate stored data.
 

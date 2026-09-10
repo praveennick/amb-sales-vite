@@ -1,9 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { currency, displayDate, weekday } from "../../lib/format";
-const colors = ["fill-violet-500", "fill-cyan-400", "fill-fuchsia-400"];
+const colors = ["fill-violet-600", "fill-cyan-700", "fill-fuchsia-700"];
 export default function SalesChart({ dates, series, label }) {
   const container = useRef(null);
   const [containerWidth, setContainerWidth] = useState(280);
+  const [selected, setSelected] = useState(null);
+  const selectedIndex = dates.indexOf(selected?.date);
+  const selectedSeries = series.find((entry) => entry.name === selected?.name);
+  const selectedValue = Number(selectedSeries?.data[selectedIndex]) || 0;
   useEffect(() => {
     const observer = new ResizeObserver(([entry]) =>
       setContainerWidth(entry.contentRect.width),
@@ -11,7 +15,13 @@ export default function SalesChart({ dates, series, label }) {
     observer.observe(container.current);
     return () => observer.disconnect();
   }, []);
-  const width = Math.max(280, containerWidth, dates.length * 42 + 60),
+  const labelWidth = Math.max(
+    72,
+    ...series.flatMap((entry) =>
+      entry.data.map((value) => currency(value).length * 7 + 20),
+    ),
+  );
+  const width = Math.max(280, containerWidth, dates.length * labelWidth + 60),
     height = 245,
     plotHeight = 170;
   const totals = dates.map((_, index) =>
@@ -44,7 +54,7 @@ export default function SalesChart({ dates, series, label }) {
           width={width}
           viewBox={`0 0 ${width} ${height}`}
           className="h-60 max-w-none"
-          role="img"
+          role="group"
           aria-label={
             label + ". Exact values are available in the data table below."
           }
@@ -91,21 +101,51 @@ export default function SalesChart({ dates, series, label }) {
                       : baseline + negativeOffset;
                   if (value >= 0) positiveOffset += barHeight;
                   else negativeOffset += barHeight;
+                  if (!value) return null;
+                  const description = `${weekday(date)} ${displayDate(date)} · ${entry.name}: ${currency(value)}`;
                   return (
-                    <rect
+                    <g
                       key={entry.name}
-                      x={55 + index * step}
-                      y={y}
-                      width={Math.max(2, step - 8)}
-                      height={barHeight}
-                      rx="2"
-                      className={colors[seriesIndex % colors.length]}
+                      role="button"
+                      tabIndex={0}
+                      aria-label={description}
+                      aria-pressed={
+                        selected?.date === date && selected?.name === entry.name
+                      }
+                      className="cursor-pointer outline-none focus:stroke-slate-900 focus:stroke-2"
+                      onClick={() => setSelected({ date, name: entry.name })}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          setSelected({ date, name: entry.name });
+                        }
+                      }}
                     >
-                      <title>
-                        {weekday(date)} {displayDate(date)} · {entry.name}:{" "}
-                        {currency(entry.data[index])}
-                      </title>
-                    </rect>
+                      <rect
+                        x={55 + index * step}
+                        y={y}
+                        width={Math.max(2, step - 8)}
+                        height={barHeight}
+                        rx="2"
+                        className={colors[seriesIndex % colors.length]}
+                      >
+                        <title>
+                          {weekday(date)} {displayDate(date)} · {entry.name}:{" "}
+                          {currency(entry.data[index])}
+                        </title>
+                      </rect>
+                      {barHeight >= 18 && (
+                        <text
+                          x={55 + index * step + (step - 8) / 2}
+                          y={y + barHeight / 2}
+                          textAnchor="middle"
+                          dominantBaseline="central"
+                          className="pointer-events-none fill-white stroke-none text-[11px] font-semibold"
+                        >
+                          {currency(value)}
+                        </text>
+                      )}
+                    </g>
                   );
                 })}
                 {
@@ -130,6 +170,33 @@ export default function SalesChart({ dates, series, label }) {
           })}
         </svg>
       </div>
+      <p className="mt-2 text-xs text-slate-500">
+        Tap a bar to see its exact amount.
+      </p>
+      {selectedIndex >= 0 && selectedSeries && selectedValue !== 0 && (
+        <div
+          role="status"
+          className="mt-3 flex items-center justify-between gap-3 rounded-xl bg-violet-50 p-3 text-sm text-violet-950"
+        >
+          <div>
+            <p className="text-xs">
+              {weekday(selected.date)} {displayDate(selected.date)} ·{" "}
+              {selected.name}
+            </p>
+            <p className="mt-1 font-bold tabular-nums">
+              {currency(selectedValue)}
+            </p>
+          </div>
+          <button
+            type="button"
+            aria-label="Dismiss bar details"
+            className="rounded-lg px-3 py-2 hover:bg-violet-100"
+            onClick={() => setSelected(null)}
+          >
+            ×
+          </button>
+        </div>
+      )}
       <div className="mt-2 flex flex-wrap gap-x-4 gap-y-2 text-xs text-slate-500">
         {series.map((entry, index) => (
           <span key={entry.name} className="flex items-center gap-2">

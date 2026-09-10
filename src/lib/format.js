@@ -13,13 +13,13 @@ export const localDate = (date = new Date()) =>
   ].join("-");
 export const documentDate = (date) => date.split("-").reverse().join("-");
 export const displayDate = (value) => {
-  if (!value) return "DD MM YY";
+  if (!value) return "DD/MM/YY";
   const date = value.slice(0, 10);
   const parts = date.split("-");
   if (parts.length !== 3) return value;
   const [year, month, day] =
     parts[0].length === 4 ? parts : [...parts].reverse();
-  return `${day} ${month} ${year.slice(-2)}`;
+  return `${day}/${month}/${year.slice(-2)}`;
 };
 export const displayTimestamp = (value) =>
   value

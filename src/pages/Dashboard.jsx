@@ -22,8 +22,7 @@ const metrics = [
   ["upi", "UPI sales"],
   ["card", "Card sales"],
   ["cashGiven", "Cash given"],
-  ["unbilledSales", "Sales outside POS"],
-  ["posShortfall", "POS shortfall"],
+  ["remaining", "Difference from POS"],
 ];
 export default function Dashboard() {
   const [range, setRange] = useState(() => presetRange("week"));
@@ -317,48 +316,35 @@ export default function Dashboard() {
             </div>
           ) : (
             <div className="grid gap-6 xl:grid-cols-2">
-              {metrics
-                .filter(
-                  ([key]) =>
-                    key !== "posShortfall" ||
-                    data.some((item) => item.posShortfall > 0),
-                )
-                .map(([key, title]) => (
-                  <section
-                    className={`panel ${key === "totalSale" ? "xl:col-span-2" : ""}`}
-                    key={key}
-                  >
-                    <div className="mb-5 flex flex-wrap justify-between gap-2">
-                      <h3 className="flex items-center gap-2 font-semibold">
-                        <FaChartBar
-                          className="text-violet-500"
-                          aria-hidden="true"
-                        />
-                        {title}
-                      </h3>
-                      <span className="font-semibold text-violet-800">
-                        {currency(
-                          data.reduce(
-                            (sum, item) => sum + (Number(item[key]) || 0),
-                            0,
-                          ),
-                        )}
-                      </span>
-                    </div>
-                    <SalesChart
-                      dates={dates}
-                      series={chartSeries[key]}
-                      label={title}
-                    />
-                    {key === "unbilledSales" && (
-                      <p className="mt-2 text-xs text-slate-500">
-                        Money collected for sales not billed in POS. Calculated
-                        per shop and day as total collected minus POS bills;
-                        shortfalls are shown separately.
-                      </p>
-                    )}
-                  </section>
-                ))}
+              {metrics.map(([key, title]) => (
+                <section
+                  className={`panel ${key === "totalSale" ? "xl:col-span-2" : ""}`}
+                  key={key}
+                >
+                  <div className="mb-5 flex flex-wrap justify-between gap-2">
+                    <h3 className="flex items-center gap-2 font-semibold">
+                      <FaChartBar
+                        className="text-violet-500"
+                        aria-hidden="true"
+                      />
+                      {title}
+                    </h3>
+                    <span className="font-semibold text-violet-800">
+                      {currency(
+                        data.reduce(
+                          (sum, item) => sum + (Number(item[key]) || 0),
+                          0,
+                        ),
+                      )}
+                    </span>
+                  </div>
+                  <SalesChart
+                    dates={dates}
+                    series={chartSeries[key]}
+                    label={title}
+                  />
+                </section>
+              ))}
             </div>
           )}
         </>

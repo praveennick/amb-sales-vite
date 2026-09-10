@@ -124,7 +124,7 @@ test("sales recalculate after POS changes and save expected document", async ({
   await page.getByLabel("UPI amount").fill("250");
   const difference = page
     .locator("dl > div")
-    .filter({ hasText: "Sales outside POS" });
+    .filter({ hasText: "Difference from POS" });
   await expect(difference).toContainText("₹50");
   await page.getByRole("button", { name: "Save daily sales" }).click();
   await expect(page).toHaveURL(/shopSelection/);

@@ -20,8 +20,7 @@ const fields = [
   "cash",
   "totalSale",
   "posSale",
-  "unbilledSales",
-  "posShortfall",
+  "remaining",
   "cashGiven",
   "submissionDate",
   "submittedBy",
@@ -109,11 +108,9 @@ export default function SalesRecords() {
                           className="grid grid-cols-2 gap-3 py-3 text-xs"
                         >
                           <dt className="break-words text-slate-500">
-                            {key === "unbilledSales"
-                              ? "Sales outside POS"
-                              : key === "posShortfall"
-                                ? "POS shortfall"
-                                : key.replace(/([A-Z])/g, " $1")}
+                            {key === "remaining"
+                              ? "Difference from POS"
+                              : key.replace(/([A-Z])/g, " $1")}
                           </dt>
                           <dd className="break-words text-right font-medium">
                             {record[key] == null

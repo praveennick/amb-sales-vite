@@ -1,6 +1,5 @@
 import writeExcelFile from "write-excel-file/browser";
 import { displayDate, displayTimestamp } from "../lib/format";
-import { getPosBreakdown } from "../lib/sales";
 
 const fields = [
   "date",
@@ -9,8 +8,7 @@ const fields = [
   "upi",
   "card",
   "cashGiven",
-  "unbilledSales",
-  "posShortfall",
+  "remaining",
   "cash",
   "totalSale",
   "expenses",
@@ -27,7 +25,6 @@ const textFields = new Set([
 export async function exportSales(records, range) {
   records = records.map((record) => ({
     ...record,
-    ...getPosBreakdown(record),
     date: displayDate(record.isoDate || record.date),
     submissionDate: record.submissionDate
       ? displayTimestamp(record.submissionDate)
@@ -35,12 +32,7 @@ export async function exportSales(records, range) {
   }));
   const rows = [
     fields.map((value) => ({
-      value:
-        value === "unbilledSales"
-          ? "Sales outside POS"
-          : value === "posShortfall"
-            ? "POS shortfall"
-            : value,
+      value: value === "remaining" ? "Difference from POS" : value,
       fontWeight: "bold",
       backgroundColor: "#7C3AED",
       textColor: "#FFFFFF",

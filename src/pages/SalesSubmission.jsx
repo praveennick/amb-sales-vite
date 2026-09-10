@@ -17,7 +17,6 @@ import {
   denominations,
   emptySale,
   validateSale,
-  getPosBreakdown,
 } from "../lib/sales";
 import { currency, documentDate, localDate } from "../lib/format";
 import ToastHandler from "../components/common/ToastHandler";
@@ -29,10 +28,6 @@ export default function DataSubmission({ shopName }) {
   const [errors, setErrors] = useState({}),
     [saving, setSaving] = useState(false);
   const totals = calculateSale(data);
-  const { unbilledSales, posShortfall } = getPosBreakdown({
-    ...data,
-    ...totals,
-  });
   const field = (key, label, notes = false) => (
     <div key={key}>
       <label className="field-label" htmlFor={key}>
@@ -166,8 +161,7 @@ export default function DataSubmission({ shopName }) {
             ["Cash sales", totals.cash],
             ["UPI", data.upi],
             ["Card", data.card],
-            ["Sales outside POS", unbilledSales],
-            ...(posShortfall > 0 ? [["POS shortfall", posShortfall]] : []),
+            ["Difference from POS", totals.remaining],
           ].map(([label, value]) => (
             <div key={label} className="flex justify-between gap-3">
               <dt className="text-slate-500">{label}</dt>
@@ -175,10 +169,6 @@ export default function DataSubmission({ shopName }) {
             </div>
           ))}
         </dl>
-        <p className="rounded-xl bg-violet-50 p-3 text-xs leading-relaxed text-violet-800">
-          Sales outside POS = total collected − POS bills. This is money
-          collected for sales not entered into the billing system.
-        </p>
         <p className="text-xs leading-relaxed text-slate-500">
           Cash = notes + expenses − counter cash. Saving replaces any existing
           sales record for this shop and date.
