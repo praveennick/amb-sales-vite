@@ -52,43 +52,43 @@ export default function Login() {
   }
   return (
     <main className="grid min-h-dvh lg:grid-cols-2">
-      <section className="hidden flex-col justify-between bg-emerald-950 p-12 text-white lg:flex xl:p-20">
+      <section className="hidden flex-col justify-between bg-linear-to-br from-slate-950 via-indigo-950 to-violet-900 p-12 text-white lg:flex xl:p-20">
         <div className="text-xl font-bold">
           AMB Sales
-          <span className="ml-3 text-sm font-normal text-emerald-300">
+          <span className="ml-3 text-sm font-normal text-cyan-300">
             Business workspace
           </span>
         </div>
         <div>
-          <p className="mb-5 text-sm font-medium uppercase tracking-widest text-emerald-300">
+          <p className="mb-5 text-sm font-medium uppercase tracking-widest text-cyan-300">
             Every shop. One clear view.
           </p>
           <h1 className="max-w-xl text-5xl leading-tight font-semibold tracking-tight">
             A better day starts with a clear picture.
           </h1>
-          <p className="mt-6 max-w-md text-lg leading-relaxed text-emerald-100/75">
+          <p className="mt-6 max-w-md text-lg leading-relaxed text-indigo-100/75">
             Keep your daily sales, expenses, and stock together. Less time on
             the numbers, more time on your business.
           </p>
-          <div className="mt-10 grid grid-cols-3 gap-3 border-t border-emerald-800 pt-6 text-sm text-emerald-100">
+          <div className="mt-10 grid grid-cols-3 gap-3 border-t border-indigo-800 pt-6 text-sm text-indigo-100">
             <span>Daily sales</span>
             <span>Shop insights</span>
             <span>Inventory</span>
           </div>
         </div>
-        <p className="text-sm text-emerald-300/70">
+        <p className="text-sm text-cyan-300/70">
           Built for your everyday operations.
         </p>
       </section>
       <section className="flex items-center justify-center px-5 py-12 sm:px-10">
         <div className="w-full max-w-md">
           <div className="mb-10 flex items-center gap-3 lg:hidden">
-            <span className="flex size-10 items-center justify-center rounded-xl bg-emerald-700 font-bold text-white">
+            <span className="flex size-10 items-center justify-center rounded-xl bg-violet-700 font-bold text-white">
               A
             </span>
             <span className="text-xl font-bold">AMB Sales</span>
           </div>
-          <p className="text-sm font-semibold text-emerald-700">WELCOME BACK</p>
+          <p className="text-sm font-semibold text-violet-700">WELCOME BACK</p>
           <h2 className="mt-3 text-3xl font-semibold tracking-tight">
             Sign in to your workspace
           </h2>

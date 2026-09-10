@@ -1,5 +1,7 @@
+import DateField from "../components/common/DateField";
+import { FaRegFileAlt, FaSyncAlt } from "react-icons/fa";
 import { useEffect, useState } from "react";
-import { localDate, currency } from "../lib/format";
+import { localDate, currency, displayTimestamp } from "../lib/format";
 import { shops } from "../lib/shops";
 import { readSales } from "../services/reports";
 import LoadingSpinner from "../components/common/LoadingSpinner/LoadingSpinner";
@@ -18,7 +20,8 @@ const fields = [
   "cash",
   "totalSale",
   "posSale",
-  "remaining",
+  "unbilledSales",
+  "posShortfall",
   "cashGiven",
   "submissionDate",
   "submittedBy",
@@ -50,18 +53,22 @@ export default function SalesRecords() {
   }, [date, revision]);
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-semibold">Sales records</h2>
-        <p className="mt-2 text-sm text-slate-500">
+      <div className="page-hero">
+        <div className="hero-orb" />
+        <h2 className="flex items-center gap-3 text-2xl font-semibold">
+          <FaRegFileAlt className="text-cyan-300" aria-hidden="true" />
+          Sales records
+        </h2>
+        <p className="mt-2 text-sm text-indigo-200">
           Review the original daily entries for each shop.
         </p>
       </div>
       <div className="panel flex flex-wrap items-end gap-4">
-        <label>
+        <label className="w-full min-w-0 sm:w-48">
           <span className="field-label">Sales date</span>
-          <input
-            className="field"
-            type="date"
+          <DateField
+            aria-label="Sales date"
+            className="min-w-0"
             value={date}
             required
             onChange={(event) => {
@@ -74,7 +81,7 @@ export default function SalesRecords() {
           disabled={loading}
           onClick={() => setRevision((value) => value + 1)}
         >
-          Refresh
+          <FaSyncAlt aria-hidden="true" /> Refresh
         </button>
       </div>
       {error ? (
@@ -92,7 +99,7 @@ export default function SalesRecords() {
                 <h3 className="mb-4 font-semibold">{shop.name}</h3>
                 {record ? (
                   <>
-                    <p className="mb-5 text-2xl font-semibold text-emerald-800">
+                    <p className="mb-5 text-2xl font-semibold text-violet-800">
                       {currency(record.totalSale)}
                     </p>
                     <dl className="divide-y divide-slate-100">
@@ -102,10 +109,24 @@ export default function SalesRecords() {
                           className="grid grid-cols-2 gap-3 py-3 text-xs"
                         >
                           <dt className="break-words text-slate-500">
-                            {key.replace(/([A-Z])/g, " $1")}
+                            {key === "unbilledSales"
+                              ? "Sales outside POS"
+                              : key === "posShortfall"
+                                ? "POS shortfall"
+                                : key.replace(/([A-Z])/g, " $1")}
                           </dt>
                           <dd className="break-words text-right font-medium">
-                            {String(record[key] ?? "N/A")}
+                            {record[key] == null
+                              ? "N/A"
+                              : key === "submissionDate"
+                                ? displayTimestamp(record[key])
+                                : ["shopName", "submittedBy"].includes(key)
+                                  ? String(record[key])
+                                  : key.startsWith("notes")
+                                    ? Number(record[key]).toLocaleString(
+                                        "en-IN",
+                                      )
+                                    : currency(record[key])}
                           </dd>
                         </div>
                       ))}

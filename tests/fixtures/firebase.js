@@ -55,7 +55,7 @@ export async function getDoc(reference) {
     (current
       ? {
           totalSale: 1250,
-          posSale: 1300,
+          posSale: 1200,
           remaining: -50,
           cash: 500,
           upi: 500,

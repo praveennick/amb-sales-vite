@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { currency } from "../../lib/format";
-const colors = ["fill-emerald-600", "fill-violet-400", "fill-amber-400"];
+import { currency, displayDate, weekday } from "../../lib/format";
+const colors = ["fill-violet-500", "fill-cyan-400", "fill-fuchsia-400"];
 export default function SalesChart({ dates, series, label }) {
   const container = useRef(null);
   const [containerWidth, setContainerWidth] = useState(280);
@@ -11,8 +11,8 @@ export default function SalesChart({ dates, series, label }) {
     observer.observe(container.current);
     return () => observer.disconnect();
   }, []);
-  const width = Math.max(280, containerWidth, dates.length * 18 + 60),
-    height = 230,
+  const width = Math.max(280, containerWidth, dates.length * 42 + 60),
+    height = 245,
     plotHeight = 170;
   const totals = dates.map((_, index) =>
     series.reduce(
@@ -102,24 +102,29 @@ export default function SalesChart({ dates, series, label }) {
                       className={colors[seriesIndex % colors.length]}
                     >
                       <title>
-                        {date} · {entry.name}: {currency(entry.data[index])}
+                        {weekday(date)} {displayDate(date)} · {entry.name}:{" "}
+                        {currency(entry.data[index])}
                       </title>
                     </rect>
                   );
                 })}
-                {index %
-                  Math.ceil(
-                    dates.length / Math.max(1, Math.floor(width / 50)),
-                  ) ===
-                  0 && (
+                {
                   <text
                     x={55 + index * step}
                     y="215"
                     className="fill-slate-500 text-[10px]"
                   >
-                    {date.slice(8)}/{date.slice(5, 7)}
+                    <tspan
+                      x={55 + index * step}
+                      className="font-semibold fill-slate-600"
+                    >
+                      {weekday(date)}
+                    </tspan>
+                    <tspan x={55 + index * step} dy="15" className="text-[8px]">
+                      {displayDate(date)}
+                    </tspan>
                   </text>
-                )}
+                }
               </g>
             );
           })}
@@ -158,7 +163,9 @@ export default function SalesChart({ dates, series, label }) {
             <tbody>
               {dates.map((date, index) => (
                 <tr key={date} className="border-t border-slate-100">
-                  <th className="p-2 font-normal">{date}</th>
+                  <th className="whitespace-nowrap p-2 font-normal">
+                    {weekday(date)} {displayDate(date)}
+                  </th>
                   {series.map((entry) => (
                     <td key={entry.name} className="p-2 tabular-nums">
                       {currency(entry.data[index])}

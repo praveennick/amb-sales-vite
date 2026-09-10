@@ -1,5 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 import {
+  FaBoxes,
+  FaPlus,
+  FaCube,
+  FaExclamationTriangle,
+  FaCheckCircle,
+  FaPen,
+  FaTrash,
+  FaSyncAlt,
+} from "react-icons/fa";
+import {
   db,
   collection,
   doc,
@@ -157,18 +167,22 @@ export default function InventoryPage() {
   }
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-4">
+      <div className="page-hero flex flex-wrap items-end justify-between gap-4">
+        <div className="hero-orb" />
         <div>
-          <p className="text-sm font-medium text-emerald-700">STOCK, SORTED</p>
+          <p className="flex items-center gap-2 text-xs font-semibold tracking-[0.18em] text-cyan-300">
+            <FaBoxes aria-hidden="true" />
+            STOCK, SORTED
+          </p>
           <h2 className="mt-2 text-2xl font-semibold tracking-tight">
             Shop inventory
           </h2>
-          <p className="mt-2 text-sm text-slate-500">
+          <p className="mt-2 text-sm text-indigo-200">
             Track what comes in, what sells, and what’s left.
           </p>
         </div>
         <label className="w-full sm:w-72">
-          <span className="field-label">Shop</span>
+          <span className="field-label text-indigo-200">Shop</span>
           <select
             className="field"
             value={shop}
@@ -205,18 +219,33 @@ export default function InventoryPage() {
           ["Total items", items.length],
           ["Low stock", items.filter((item) => stockLeft(item) <= 5).length],
           ["Well stocked", items.filter((item) => stockLeft(item) > 20).length],
-        ].map(([label, count]) => (
-          <section className="panel" key={label}>
-            <p className="text-sm text-slate-500">{label}</p>
-            <p className="mt-2 text-2xl font-semibold">
-              {loading ? "—" : count}
-            </p>
-          </section>
-        ))}
+        ].map(([label, count], index) => {
+          const Icon = [FaCube, FaExclamationTriangle, FaCheckCircle][index];
+          const tones = [
+            "from-violet-50 to-indigo-50 text-violet-600",
+            "from-amber-50 to-orange-50 text-orange-600",
+            "from-cyan-50 to-blue-50 text-cyan-600",
+          ];
+          return (
+            <section
+              className={`panel bg-linear-to-br ${tones[index]}`}
+              key={label}
+            >
+              <Icon className="mb-4 text-2xl" aria-hidden="true" />
+              <p className="text-sm text-slate-500">{label}</p>
+              <p className="mt-2 text-2xl font-semibold">
+                {loading ? "—" : count}
+              </p>
+            </section>
+          );
+        })}
       </div>
       <div className="grid items-start gap-6 xl:grid-cols-[320px_minmax(0,1fr)]">
         <details className="panel">
-          <summary className="font-semibold">Add new item</summary>
+          <summary className="flex items-center gap-2 font-semibold">
+            <FaPlus className="text-violet-500" aria-hidden="true" />
+            Add new item
+          </summary>
           <form className="mt-5" onSubmit={save}>
             <fieldset disabled={busy || loading} className="space-y-4">
               <label className="block">
@@ -270,7 +299,7 @@ export default function InventoryPage() {
               disabled={busy || loading}
               onClick={() => setRevision((value) => value + 1)}
             >
-              Refresh
+              <FaSyncAlt aria-hidden="true" /> Refresh
             </button>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -284,7 +313,7 @@ export default function InventoryPage() {
                 key={id}
                 aria-pressed={filter === id}
                 onClick={() => setFilter(id)}
-                className={`min-h-11 rounded-xl border px-4 text-sm font-medium ${filter === id ? "border-emerald-700 bg-emerald-700 text-white" : "border-slate-200 bg-white text-slate-600"}`}
+                className={`min-h-11 rounded-xl border px-4 text-sm font-medium ${filter === id ? "border-violet-700 bg-violet-700 text-white" : "border-slate-200 bg-white text-slate-600"}`}
               >
                 {label}
               </button>
@@ -314,7 +343,7 @@ export default function InventoryPage() {
                     <div className="shrink-0 text-right">
                       <p className="text-xs text-slate-500">Remaining</p>
                       <p
-                        className={`mt-1 text-2xl font-semibold ${stockLeft(item) <= 5 ? "text-red-700" : "text-emerald-700"}`}
+                        className={`mt-1 text-2xl font-semibold ${stockLeft(item) <= 5 ? "text-red-700" : "text-violet-700"}`}
                       >
                         {stockLeft(item)}
                       </p>
@@ -362,14 +391,14 @@ export default function InventoryPage() {
                             setDeleting(null);
                           }}
                         >
-                          Edit
+                          <FaPen aria-hidden="true" /> Edit
                         </button>
                         <button
                           className="btn-secondary text-red-700"
                           disabled={busy}
                           onClick={() => setDeleting(item.id)}
                         >
-                          Delete
+                          <FaTrash aria-hidden="true" /> Delete
                         </button>
                       </div>
                     </>
@@ -382,7 +411,7 @@ export default function InventoryPage() {
                       <p>Delete “{item.name}”? This cannot be undone.</p>
                       <div className="mt-3 flex flex-wrap gap-2">
                         <button
-                          className="btn-primary bg-red-700 hover:bg-red-800"
+                          className="btn-primary from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700"
                           disabled={busy}
                           onClick={() => remove(item)}
                         >

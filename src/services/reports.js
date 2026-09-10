@@ -2,6 +2,7 @@ import { db, doc, getDoc } from "./firebaseDb";
 import { shops } from "../lib/shops";
 import { documentDate } from "../lib/format";
 import { mapLimit } from "../lib/async";
+import { getPosBreakdown } from "../lib/sales";
 export async function readSales(dates, signal) {
   const jobs = [...new Set(dates)].flatMap((date) =>
     shops.map((shop) => ({ date, shopName: shop.name })),
@@ -15,6 +16,7 @@ export async function readSales(dates, signal) {
       return snapshot.exists()
         ? {
             ...snapshot.data(),
+            ...getPosBreakdown(snapshot.data()),
             date: documentDate(date),
             isoDate: date,
             shopName,

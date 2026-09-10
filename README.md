@@ -23,7 +23,9 @@ On Windows with PowerShell script restrictions, use `npm.cmd` instead of `npm`.
 - `src/index.css`: Tailwind theme, base rules, and shared utility compositions.
 - `tests/`: calculation tests, isolated browser fixtures, and production smoke tests.
 
-JSX uses `.jsx` files, so Vite no longer needs a custom JSX loader for `.js` files. Pages load on demand through React lazy/Suspense; database and Excel code are excluded from the initial login bundle. The chart UI uses SVG with Tailwind classes and accessible exact-value tables.
+JSX uses `.jsx` files, so Vite no longer needs a custom JSX loader for `.js` files. Pages load on demand through React lazy/Suspense; database and Excel code are excluded from the initial login bundle. The chart UI uses SVG with Tailwind classes and accessible exact-value tables. The colorful theme combines dark indigo navigation, violet/cyan gradients, tinted summary cards, and section/action icons.
+
+Visible dates use `DD MM YY`; the shared date field preserves native calendar selection while preventing Safari's native date text from stretching the layout. Chart labels include short weekdays (Mon, Tue, etc.). Whole currency amounts omit `.00`; real fractional amounts remain visible. Exports follow the same date and currency presentation.
 
 ## Behavior and data compatibility
 
@@ -33,7 +35,7 @@ Existing URLs and Firestore paths are preserved:
 - Expenses: `dailySpends/{DD-MM-YYYY}/spends/{id}`.
 - Inventory: `inventory/{shopName}/items/{id}`.
 
-Sales saves still replace the existing record for the selected shop and date. Cash is notes + expenses − counter cash; total sales are cash + UPI + card; the POS difference recalculates whenever any input changes. Monetary values round to two decimal places. Inventory Cancel discards draft changes.
+Sales saves still replace the existing record for the selected shop and date. Cash is notes + expenses − counter cash; total sales are cash + UPI + card. “Sales outside POS” means collected money for sales not entered into the billing system: `max(total sales − POS sales, 0)`. If POS exceeds collections, the difference appears separately as “POS shortfall.” Reports calculate these amounts per shop and day from the source totals, so stale stored differences do not mislabel collections. The signed `remaining` field is preserved for storage compatibility; existing database records are not rewritten. Monetary values round to two decimal places internally. Inventory Cancel discards draft changes.
 
 Dashboard reads use eight concurrent requests, deduplicate overlapping dates, debounce changes, stop queued work on navigation, and reject ranges over 366 days. Expense dates within the same month reuse loaded data; successful mutations update local results without fetching the month again. Refresh retrieves current server data. The existing date-subcollection schema still requires per-day reads; this refactor does not migrate stored data.
 
@@ -51,8 +53,8 @@ npm run test:e2e
 npm run test:production
 ```
 
-Browser tests use installed Google Chrome in headless mode. `test:e2e` uses a separate Vite configuration with an in-memory Firebase fixture; these aliases are not used by normal development or production. The tests exercise mobile and desktop navigation, route protection, sales reconciliation, inventory cancellation, expense CRUD, error recovery, and actual Excel downloads. Production smoke tests load the real built login screen at 320, 390, 768, and 1440 pixels with external requests blocked. Live sign-in and production database writes are not tested.
+Browser tests use installed Google Chrome in headless mode plus Playwright WebKit for the mobile date and chart checks. Install WebKit once with `npx playwright install webkit`. `test:e2e` uses a separate Vite configuration with an in-memory Firebase fixture; these aliases are not used by normal development or production. The tests exercise mobile and desktop navigation, route protection, sales reconciliation, inventory cancellation, expense CRUD, error recovery, and actual Excel downloads. Production smoke tests load the real built login screen at 320, 390, 768, and 1440 pixels with external requests blocked. Live sign-in and production database writes are not tested.
 
-The initial build before restructuring shipped 1,968.78 kB of JavaScript (558.94 kB gzip). The refactored login entry is approximately 448 kB (125 kB gzip); database code and Excel exports load separately. These are build-size measurements, not claims about live network latency. `dist/.vite/manifest.json` records the chunk graph.
+The initial build before restructuring shipped 1,968.78 kB of JavaScript (558.94 kB gzip). The refactored login entry is approximately 459 kB (129 kB gzip); database code and Excel exports load separately. These are build-size measurements, not claims about live network latency. `dist/.vite/manifest.json` records the chunk graph.
 
 Implementation references: [React lazy](https://react.dev/reference/react/lazy), [Vite dynamic import handling](https://vite.dev/guide/features), and [write-excel-file](https://github.com/catamphetamine/write-excel-file).

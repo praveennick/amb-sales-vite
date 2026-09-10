@@ -1,4 +1,6 @@
 import writeExcelFile from "write-excel-file/browser";
+import { displayDate, displayTimestamp } from "../lib/format";
+import { getPosBreakdown } from "../lib/sales";
 
 const fields = [
   "date",
@@ -7,7 +9,8 @@ const fields = [
   "upi",
   "card",
   "cashGiven",
-  "remaining",
+  "unbilledSales",
+  "posShortfall",
   "cash",
   "totalSale",
   "expenses",
@@ -22,11 +25,24 @@ const textFields = new Set([
   "submissionDate",
 ]);
 export async function exportSales(records, range) {
+  records = records.map((record) => ({
+    ...record,
+    ...getPosBreakdown(record),
+    date: displayDate(record.isoDate || record.date),
+    submissionDate: record.submissionDate
+      ? displayTimestamp(record.submissionDate)
+      : "",
+  }));
   const rows = [
     fields.map((value) => ({
-      value,
+      value:
+        value === "unbilledSales"
+          ? "Sales outside POS"
+          : value === "posShortfall"
+            ? "POS shortfall"
+            : value,
       fontWeight: "bold",
-      backgroundColor: "#047857",
+      backgroundColor: "#7C3AED",
       textColor: "#FFFFFF",
     })),
   ];
@@ -38,7 +54,9 @@ export async function exportSales(records, range) {
           : {
               value: Number(record[key]) || 0,
               type: Number,
-              format: "#,##0.00",
+              format: Number.isInteger(Number(record[key]) || 0)
+                ? "#,##0"
+                : "#,##0.##",
             },
       ),
     );
@@ -54,7 +72,7 @@ export async function exportSales(records, range) {
                 0,
               ),
       fontWeight: "bold",
-      backgroundColor: "#ECFDF5",
+      backgroundColor: "#F5F3FF",
     })),
   );
   await writeExcelFile(rows, {

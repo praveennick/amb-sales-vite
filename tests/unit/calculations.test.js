@@ -4,6 +4,40 @@ import { calculateSale, emptySale, validateSale } from "../../src/lib/sales.js";
 import { dateRange, localDate, documentDate } from "../../src/lib/format.js";
 import { stockLeft, validateStock } from "../../src/lib/inventory.js";
 import { mapLimit } from "../../src/lib/async.js";
+import { getPosBreakdown } from "../../src/lib/sales.js";
+import {
+  currency,
+  displayDate,
+  displayTimestamp,
+  weekday,
+} from "../../src/lib/format.js";
+
+test("outside-POS sales show collected money not entered in billing, independent of stale remaining", () => {
+  assert.deepEqual(
+    getPosBreakdown({ totalSale: 1250, posSale: 1200, remaining: -50 }),
+    { unbilledSales: 50, posShortfall: 0 },
+  );
+  assert.deepEqual(getPosBreakdown({ totalSale: 1200, posSale: 1250 }), {
+    unbilledSales: 0,
+    posShortfall: 50,
+  });
+  assert.deepEqual(getPosBreakdown({ totalSale: 1250, posSale: 1250 }), {
+    unbilledSales: 0,
+    posShortfall: 0,
+  });
+});
+test("whole amounts omit .00 while real fractional amounts remain visible", () => {
+  assert.equal(currency(1250), "₹1,250");
+  assert.equal(currency(0), "₹0");
+  assert.equal(currency(120.5), "₹120.5");
+  assert.equal(currency(120.55), "₹120.55");
+});
+test("visible dates use DD MM YY and weekday labels use short English names", () => {
+  assert.equal(displayDate("2026-09-10"), "10 09 26");
+  assert.equal(displayDate("10-09-2026"), "10 09 26");
+  assert.equal(displayTimestamp("10-09-2026 13:45:00"), "10 09 26 13:45:00");
+  assert.equal(weekday("2026-09-07"), "Mon");
+});
 test("cancelled reports stop scheduling new database reads", async () => {
   const controller = new AbortController();
   let calls = 0;

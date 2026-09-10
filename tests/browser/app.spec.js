@@ -124,8 +124,8 @@ test("sales recalculate after POS changes and save expected document", async ({
   await page.getByLabel("UPI amount").fill("250");
   const difference = page
     .locator("dl > div")
-    .filter({ hasText: "Difference from POS" });
-  await expect(difference).toContainText("₹50.00");
+    .filter({ hasText: "Sales outside POS" });
+  await expect(difference).toContainText("₹50");
   await page.getByRole("button", { name: "Save daily sales" }).click();
   await expect(page).toHaveURL(/shopSelection/);
   const writes = await page.evaluate(() => window.__testWrites);
@@ -167,11 +167,11 @@ test("expenses add/edit/delete without re-reading the whole month", async ({
   await page.getByLabel("Amount (₹)", { exact: true }).fill("120.50");
   await page.getByRole("button", { name: "Add expense", exact: true }).click();
   const row = page.getByRole("listitem").filter({ hasText: "Packaging" });
-  await expect(row).toContainText("₹120.50");
+  await expect(row).toContainText("₹120.5");
   await row.getByRole("button", { name: "Edit", exact: true }).click();
   await page.getByLabel("Expense amount", { exact: true }).fill("130");
   await page.getByRole("button", { name: "Save", exact: true }).click();
-  await expect(row).toContainText("₹130.00");
+  await expect(row).toContainText("₹130");
   await row.getByRole("button", { name: "Delete", exact: true }).click();
   await row
     .getByRole("button", { name: "Delete expense", exact: true })

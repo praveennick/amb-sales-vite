@@ -1,3 +1,13 @@
+import DateField from "../components/common/DateField";
+import {
+  FaReceipt,
+  FaPlus,
+  FaSyncAlt,
+  FaWallet,
+  FaChartBar,
+  FaPen,
+  FaTrash,
+} from "react-icons/fa";
 import { useEffect, useMemo, useState } from "react";
 import {
   db,
@@ -9,7 +19,13 @@ import {
   deleteDoc,
 } from "../services/firebaseDb";
 import { useAuth } from "../context/auth";
-import { currency, dateRange, documentDate, localDate } from "../lib/format";
+import {
+  currency,
+  dateRange,
+  documentDate,
+  localDate,
+  displayDate,
+} from "../lib/format";
 import { mapLimit } from "../lib/async";
 import SalesChart from "../components/charts/SalesChart";
 import LoadingSpinner from "../components/common/LoadingSpinner/LoadingSpinner";
@@ -155,14 +171,16 @@ export default function DailySpends() {
   }
   return (
     <div className="space-y-6">
-      <div>
-        <p className="text-sm font-medium text-emerald-700">
+      <div className="page-hero">
+        <div className="hero-orb" />
+        <p className="flex items-center gap-2 text-xs font-semibold tracking-[0.18em] text-cyan-300">
+          <FaReceipt aria-hidden="true" />
           KEEP SPENDING IN SIGHT
         </p>
         <h2 className="mt-2 text-2xl font-semibold tracking-tight">
           Daily expenses
         </h2>
-        <p className="mt-2 text-sm text-slate-500">
+        <p className="mt-2 text-sm text-indigo-200">
           Record purchases and follow your monthly spend.
         </p>
       </div>
@@ -172,10 +190,9 @@ export default function DailySpends() {
             <label className="field-label" htmlFor="expense-date">
               Expense date
             </label>
-            <input
+            <DateField
               id="expense-date"
-              className="field"
-              type="date"
+              className="min-w-0"
               value={date}
               required
               disabled={busy}
@@ -219,13 +236,14 @@ export default function DailySpends() {
                   min="0.01"
                   step="0.01"
                   inputMode="decimal"
-                  placeholder="0.00"
+                  placeholder="0"
                   required
                   value={price}
                   onChange={(event) => setPrice(event.target.value)}
                 />
               </div>
               <button className="btn-primary w-full">
+                <FaPlus aria-hidden="true" />
                 {busy ? "Saving…" : "Add expense"}
               </button>
             </fieldset>
@@ -235,7 +253,7 @@ export default function DailySpends() {
             disabled={busy || loading}
             onClick={() => setRevision((value) => value + 1)}
           >
-            Refresh expenses
+            <FaSyncAlt aria-hidden="true" /> Refresh expenses
           </button>
         </section>
         <div className="min-w-0 space-y-6">
@@ -256,7 +274,11 @@ export default function DailySpends() {
           ) : (
             <>
               <div className="grid gap-4 sm:grid-cols-2">
-                <section className="panel">
+                <section className="panel bg-linear-to-br from-fuchsia-50 to-violet-50">
+                  <FaWallet
+                    className="mb-4 text-2xl text-fuchsia-500"
+                    aria-hidden="true"
+                  />
                   <p className="text-sm text-slate-500">
                     Total for{" "}
                     {new Date(month + "-01T12:00:00").toLocaleDateString(
@@ -264,11 +286,15 @@ export default function DailySpends() {
                       { month: "long", year: "numeric" },
                     )}
                   </p>
-                  <p className="mt-2 text-3xl font-semibold text-emerald-800">
+                  <p className="mt-2 text-3xl font-semibold text-violet-800">
                     {currency(monthlyTotal)}
                   </p>
                 </section>
-                <section className="panel">
+                <section className="panel bg-linear-to-br from-cyan-50 to-blue-50">
+                  <FaReceipt
+                    className="mb-4 text-2xl text-cyan-500"
+                    aria-hidden="true"
+                  />
                   <p className="text-sm text-slate-500">
                     Selected day · {dayItems.length} expenses
                   </p>
@@ -278,7 +304,10 @@ export default function DailySpends() {
                 </section>
               </div>
               <section className="panel">
-                <h3 className="mb-4 font-semibold">Monthly spending</h3>
+                <h3 className="mb-4 flex items-center gap-2 font-semibold">
+                  <FaChartBar className="text-violet-500" aria-hidden="true" />
+                  Monthly spending
+                </h3>
                 <SalesChart
                   dates={dates}
                   series={[
@@ -292,7 +321,7 @@ export default function DailySpends() {
               </section>
               <section className="panel">
                 <h3 className="mb-5 font-semibold">
-                  Expenses for {documentDate(date)}
+                  Expenses for {displayDate(date)}
                 </h3>
                 {!dayItems.length ? (
                   <p className="py-8 text-center text-sm text-slate-500">
@@ -367,14 +396,14 @@ export default function DailySpends() {
                                 setDeleting(null);
                               }}
                             >
-                              Edit
+                              <FaPen aria-hidden="true" /> Edit
                             </button>
                             <button
                               className="btn-secondary text-red-700"
                               disabled={busy}
                               onClick={() => setDeleting(item.id)}
                             >
-                              Delete
+                              <FaTrash aria-hidden="true" /> Delete
                             </button>
                           </div>
                         )}
@@ -386,7 +415,7 @@ export default function DailySpends() {
                             <p>Delete “{item.title}”? This cannot be undone.</p>
                             <div className="mt-3 flex gap-2">
                               <button
-                                className="btn-primary bg-red-700 hover:bg-red-800"
+                                className="btn-primary from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700"
                                 disabled={busy}
                                 onClick={() => mutate("delete", item)}
                               >

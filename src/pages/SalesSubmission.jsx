@@ -1,3 +1,13 @@
+import DateField from "../components/common/DateField";
+import SectionHeading from "../components/common/SectionHeading";
+import {
+  FaStore,
+  FaCreditCard,
+  FaMoneyBillWave,
+  FaCashRegister,
+  FaCheckCircle,
+  FaWallet,
+} from "react-icons/fa";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { db, doc, setDoc } from "../services/firebaseDb";
@@ -7,6 +17,7 @@ import {
   denominations,
   emptySale,
   validateSale,
+  getPosBreakdown,
 } from "../lib/sales";
 import { currency, documentDate, localDate } from "../lib/format";
 import ToastHandler from "../components/common/ToastHandler";
@@ -18,6 +29,10 @@ export default function DataSubmission({ shopName }) {
   const [errors, setErrors] = useState({}),
     [saving, setSaving] = useState(false);
   const totals = calculateSale(data);
+  const { unbilledSales, posShortfall } = getPosBreakdown({
+    ...data,
+    ...totals,
+  });
   const field = (key, label, notes = false) => (
     <div key={key}>
       <label className="field-label" htmlFor={key}>
@@ -82,18 +97,17 @@ export default function DataSubmission({ shopName }) {
       className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_320px]"
     >
       <fieldset disabled={saving} className="min-w-0 space-y-6">
-        <section className="panel">
-          <h2 className="text-xl font-semibold">{shopName}</h2>
+        <section className="panel border-t-4 border-t-violet-500">
+          <SectionHeading icon={FaStore}>{shopName}</SectionHeading>
           <p className="mt-1 mb-5 text-sm text-slate-500">
             Record sales and reconcile your counter for the day.
           </p>
           <label className="field-label" htmlFor="sale-date">
             Sales date
           </label>
-          <input
+          <DateField
             id="sale-date"
-            type="date"
-            className="field max-w-xs"
+            className="min-w-0"
             value={date}
             max={localDate()}
             required
@@ -101,14 +115,18 @@ export default function DataSubmission({ shopName }) {
           />
         </section>
         <section className="panel">
-          <h2 className="mb-5 text-base font-semibold">Digital payments</h2>
+          <SectionHeading icon={FaCreditCard} tone="cyan">
+            Digital payments
+          </SectionHeading>
           <div className="grid gap-4 sm:grid-cols-2">
             {field("upi", "UPI amount")}
             {field("card", "Card amount")}
           </div>
         </section>
         <section className="panel">
-          <h2 className="text-base font-semibold">Cash denominations</h2>
+          <SectionHeading icon={FaMoneyBillWave} tone="amber">
+            Cash denominations
+          </SectionHeading>
           <p className="mt-1 mb-5 text-sm text-slate-500">
             Enter the number of notes, not their total value.
           </p>
@@ -119,9 +137,9 @@ export default function DataSubmission({ shopName }) {
           </div>
         </section>
         <section className="panel">
-          <h2 className="mb-5 text-base font-semibold">
+          <SectionHeading icon={FaCashRegister} tone="pink">
             Counter reconciliation
-          </h2>
+          </SectionHeading>
           <div className="grid gap-4 sm:grid-cols-2">
             {field("expenses", "Expenses")}
             {field("counterCash", "Counter cash")}
@@ -132,9 +150,12 @@ export default function DataSubmission({ shopName }) {
       </fieldset>
       <aside className="panel space-y-5 xl:sticky xl:top-26">
         <div>
-          <p className="text-sm text-slate-500">Total sales</p>
+          <p className="flex items-center gap-2 text-sm font-medium text-violet-600">
+            <FaWallet aria-hidden="true" />
+            Total sales
+          </p>
           <p
-            className="mt-2 text-3xl font-semibold tracking-tight text-emerald-800"
+            className="mt-2 text-3xl font-semibold tracking-tight text-violet-800"
             aria-live="polite"
           >
             {currency(totals.totalSale)}
@@ -145,7 +166,8 @@ export default function DataSubmission({ shopName }) {
             ["Cash sales", totals.cash],
             ["UPI", data.upi],
             ["Card", data.card],
-            ["Difference from POS", totals.remaining],
+            ["Sales outside POS", unbilledSales],
+            ...(posShortfall > 0 ? [["POS shortfall", posShortfall]] : []),
           ].map(([label, value]) => (
             <div key={label} className="flex justify-between gap-3">
               <dt className="text-slate-500">{label}</dt>
@@ -153,11 +175,16 @@ export default function DataSubmission({ shopName }) {
             </div>
           ))}
         </dl>
+        <p className="rounded-xl bg-violet-50 p-3 text-xs leading-relaxed text-violet-800">
+          Sales outside POS = total collected − POS bills. This is money
+          collected for sales not entered into the billing system.
+        </p>
         <p className="text-xs leading-relaxed text-slate-500">
           Cash = notes + expenses − counter cash. Saving replaces any existing
           sales record for this shop and date.
         </p>
         <button disabled={saving} className="btn-primary w-full">
+          <FaCheckCircle aria-hidden="true" />
           {saving ? "Saving sales…" : "Save daily sales"}
         </button>
       </aside>

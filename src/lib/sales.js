@@ -15,6 +15,15 @@ export const emptySale = () =>
     ]),
   );
 const round = (value) => Math.round((value + Number.EPSILON) * 100) / 100;
+export function getPosBreakdown(data) {
+  const difference = round(
+    (Number(data.totalSale) || 0) - (Number(data.posSale) || 0),
+  );
+  return {
+    unbilledSales: Math.max(0, difference),
+    posShortfall: Math.max(0, -difference),
+  };
+}
 export function calculateSale(data) {
   const notes = denominations.reduce(
     (sum, note) => sum + (Number(data["notes" + note]) || 0) * note,

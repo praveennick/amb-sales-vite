@@ -6,14 +6,27 @@ export default defineConfig({
   use: {
     baseURL: "http://127.0.0.1:4174",
     headless: true,
-    channel: "chrome",
     trace: "off",
   },
   projects: [
-    { name: "desktop", use: { viewport: { width: 1440, height: 1000 } } },
+    {
+      name: "mobile-webkit",
+      testMatch: /responsive\.spec\.js/,
+      use: {
+        browserName: "webkit",
+        viewport: { width: 390, height: 844 },
+        isMobile: true,
+        hasTouch: true,
+      },
+    },
+    {
+      name: "desktop",
+      use: { channel: "chrome", viewport: { width: 1440, height: 1000 } },
+    },
     {
       name: "mobile",
       use: {
+        channel: "chrome",
         viewport: { width: 390, height: 844 },
         isMobile: true,
         hasTouch: true,
