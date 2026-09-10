@@ -25,9 +25,14 @@ export default function AuthProvider({ children }) {
         setLoading(Boolean(next));
         if (!next) return;
         try {
-          const { db, doc, onSnapshot } =
+          const { db, doc, onSnapshot, setDoc } =
             await import("../services/firebaseDb");
           if (current !== generation) return;
+          if (next.email) {
+            setDoc(doc(db, "users", next.uid), {
+              email: next.email,
+            }).catch(() => {});
+          }
           stopRole = onSnapshot(
             doc(db, "admins", next.uid),
             (snapshot) => {

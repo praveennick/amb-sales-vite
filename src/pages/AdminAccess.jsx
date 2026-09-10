@@ -49,12 +49,9 @@ export default function AdminAccess() {
       setNotice("Admin access granted.");
     } catch (failure) {
       const messages = {
-        "functions/not-found":
+        "account-not-found":
           "No account exists with that email. Ask the user to sign in once, then try again.",
-        "functions/failed-precondition": "That account is disabled.",
-        "functions/permission-denied":
-          "Your account cannot grant admin access.",
-        "functions/invalid-argument": "Enter a valid email address.",
+        "permission-denied": "Your account cannot grant admin access.",
       };
       setError(
         messages[failure.code] || "Could not grant access. Please try again.",

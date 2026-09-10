@@ -1,10 +1,3 @@
 {
-  "functions": [
-    {
-      "source": "functions",
-      "codebase": "admin-access",
-      "ignore": ["node_modules", "*.test.js"]
-    }
-  ],
   "firestore": { "rules": "firestore.rules" }
 }

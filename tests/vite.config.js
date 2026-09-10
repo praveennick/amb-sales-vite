@@ -8,7 +8,6 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: [
-      { find: /^\.\.\/services\/adminAccess\.js$/, replacement: mock },
       { find: /^(\.\.\/|\.\/)+(services\/)?firebaseDb$/, replacement: mock },
       { find: /^firebase\/auth$/, replacement: mock },
       { find: /^(\.\.\/|\.\/)+firebase$/, replacement: mock },

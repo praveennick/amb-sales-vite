@@ -10,9 +10,19 @@ service cloud.firestore {
     match /admins/{uid} {
       allow get: if signedIn() && (request.auth.uid == uid || admin());
       allow list: if admin();
-      // Grants are made only by the callable function after Authentication lookup.
-      allow create, update: if false;
+      allow create, update: if admin() && uid != request.auth.uid
+        && request.resource.data.keys().hasOnly(['active', 'email'])
+        && request.resource.data.active == true
+        && request.resource.data.email is string;
       allow delete: if admin() && uid != request.auth.uid;
+    }
+    match /users/{uid} {
+      allow read: if admin();
+      allow create, update: if signedIn()
+        && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['email'])
+        && request.resource.data.email == request.auth.token.email;
+      allow delete: if false;
     }
     match /shops/{store}/{date}/data {
       allow read, delete: if admin();

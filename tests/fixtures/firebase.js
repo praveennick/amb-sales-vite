@@ -30,19 +30,6 @@ export async function signInWithEmailAndPassword() {
   listeners.forEach((listener) => listener(getUser()));
 }
 export const signInWithPopup = signInWithEmailAndPassword;
-export async function grantAdminByEmail(email) {
-  await wait();
-  if (email === "missing@example.com") {
-    const error = new Error("No user");
-    error.code = "functions/not-found";
-    throw error;
-  }
-  const reference = "admins/another-user";
-  const data = { active: true, email };
-  store.set(reference, data);
-  window.__testWrites.push({ reference, data });
-  roleListeners.forEach((notify) => notify());
-}
 const path = (_db, ...parts) => parts.join("/");
 export const doc = path,
   collection = path;
@@ -86,21 +73,27 @@ export async function getDocs(reference) {
   window.__testReads.push(reference);
   await wait();
   if (!store.has(reference)) {
-    const rows = reference.startsWith("inventory/")
-      ? [
-          {
-            id: "sugar",
-            name: "Sugar",
-            unit: "kg",
-            open: "10",
-            buy: "5",
-            waste: "1",
-            sold: "2",
-          },
-        ]
-      : reference.includes(documentDate(localDate()))
-        ? [{ id: "milk", title: "Milk", price: 80 }]
-        : [];
+    const rows =
+      reference === "users"
+        ? [
+            { id: "test-user", email: "admin@abc.com" },
+            { id: "another-user", email: "manager@example.com" },
+          ]
+        : reference.startsWith("inventory/")
+          ? [
+              {
+                id: "sugar",
+                name: "Sugar",
+                unit: "kg",
+                open: "10",
+                buy: "5",
+                waste: "1",
+                sold: "2",
+              },
+            ]
+          : reference.includes(documentDate(localDate()))
+            ? [{ id: "milk", title: "Milk", price: 80 }]
+            : [];
     store.set(reference, rows);
   }
   return {
@@ -112,7 +105,8 @@ export async function getDocs(reference) {
 export async function setDoc(reference, data) {
   await wait();
   store.set(reference, data);
-  window.__testWrites.push({ reference, data });
+  if (!reference.startsWith("users/"))
+    window.__testWrites.push({ reference, data });
   roleListeners.forEach((notify) => notify());
 }
 export async function addDoc(reference, data) {
