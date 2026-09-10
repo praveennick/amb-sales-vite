@@ -20,7 +20,7 @@ function Home() {
   if (loading) return <LoadingSpinner />;
   return (
     <Navigate
-      to={user ? (isAdmin ? "/dashboard" : "/shopSelection") : "/login"}
+      to={user ? (isAdmin ? "/dashboard" : "/stores") : "/login"}
       replace
     />
   );
@@ -34,9 +34,24 @@ export default function App() {
           <Suspense fallback={<LoadingSpinner />}>
             <Routes>
               <Route path="/login" element={<Login />} />
+              {[
+                ["/shopSelection", "/stores"],
+                ["/daily-spends", "/expenses"],
+                ["/testing", "/sales-records"],
+                ...shops.map((shop) => [
+                  shop.path.replace("/sales/", "/submit/"),
+                  shop.path,
+                ]),
+              ].map(([previous, current]) => (
+                <Route
+                  key={previous}
+                  path={previous}
+                  element={<Navigate to={current} replace />}
+                />
+              ))}
               <Route element={<ProtectedRoute />}>
                 <Route element={<AppLayout />}>
-                  <Route path="/shopSelection" element={<ShopSelection />} />
+                  <Route path="/stores" element={<ShopSelection />} />
                   {shops.map((shop) => (
                     <Route
                       key={shop.path}
@@ -48,9 +63,9 @@ export default function App() {
                   ))}
                   <Route element={<ProtectedRoute adminOnly />}>
                     <Route path="/dashboard" element={<Dashboard />} />
-                    <Route path="/daily-spends" element={<DailySpends />} />
+                    <Route path="/expenses" element={<DailySpends />} />
                     <Route path="/inventory" element={<InventoryPage />} />
-                    <Route path="/testing" element={<Records />} />
+                    <Route path="/sales-records" element={<Records />} />
                   </Route>
                 </Route>
               </Route>

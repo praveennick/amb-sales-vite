@@ -77,7 +77,7 @@ export default function DataSubmission({ shopName }) {
           new Date().toTimeString().slice(0, 8),
       });
       ToastHandler.success("Sales saved successfully.");
-      navigate("/shopSelection");
+      navigate("/stores");
     } catch {
       ToastHandler.error(
         "Could not save sales. Your entries are still here; please try again.",
@@ -171,7 +171,7 @@ export default function DataSubmission({ shopName }) {
         </dl>
         <p className="text-xs leading-relaxed text-slate-500">
           Cash = notes + expenses − counter cash. Saving replaces any existing
-          sales record for this shop and date.
+          sales record for this store and date.
         </p>
         <button disabled={saving} className="btn-primary w-full">
           <FaCheckCircle aria-hidden="true" />

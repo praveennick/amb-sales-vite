@@ -1,11 +1,26 @@
 import { test, expect } from "@playwright/test";
+
+test("previous links redirect to the renamed routes", async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem("test-role", "admin"));
+  for (const [previous, current] of [
+    ["/shopSelection", "/stores"],
+    ["/daily-spends", "/expenses"],
+    ["/testing", "/sales-records"],
+    ["/submit/juice-hut", "/sales/juice-hut"],
+    ["/submit/bubble-tea", "/sales/bubble-tea"],
+    ["/submit/coffee-candy", "/sales/coffee-candy"],
+  ]) {
+    await page.goto(previous);
+    await expect(page).toHaveURL(new RegExp(current + "$"));
+  }
+});
 import { readFile } from "node:fs/promises";
 import { unzipSync, strFromU8 } from "fflate";
 
 test("failed sales writes retain inputs and can be retried", async ({
   page,
 }) => {
-  await page.goto("/submit/juice-hut");
+  await page.goto("/sales/juice-hut");
   for (const label of [
     "UPI amount",
     "Card amount",
@@ -25,13 +40,13 @@ test("failed sales writes retain inputs and can be retried", async ({
   ).toBeEnabled();
   await page.evaluate(() => localStorage.removeItem("test-fail"));
   await page.getByRole("button", { name: "Save daily sales" }).click();
-  await expect(page).toHaveURL(/shopSelection/);
+  await expect(page).toHaveURL(/stores/);
 });
 
 test("switching expense days in the same month does not fetch again", async ({
   page,
 }) => {
-  await page.goto("/daily-spends");
+  await page.goto("/expenses");
   await expect(
     page.getByRole("button", { name: "Add expense", exact: true }),
   ).toBeEnabled();
@@ -65,12 +80,12 @@ test("all pages render without runtime errors or viewport overflow", async ({
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
   for (const [route, title] of [
-    ["/shopSelection", "Your shops"],
+    ["/stores", "Your stores"],
     ["/dashboard", "Sales overview"],
-    ["/submit/juice-hut", "The Juice Hut"],
-    ["/daily-spends", "Daily expenses"],
-    ["/inventory", "Shop inventory"],
-    ["/testing", "Sales records"],
+    ["/sales/juice-hut", "The Juice Hut"],
+    ["/expenses", "Daily expenses"],
+    ["/inventory", "Store inventory"],
+    ["/sales-records", "Sales records"],
   ]) {
     await page.goto(route);
     await expect(
@@ -91,7 +106,7 @@ test("mobile navigation traps focus, closes on Escape and updates route title", 
   page,
 }, info) => {
   test.skip(info.project.name !== "mobile");
-  await page.goto("/shopSelection");
+  await page.goto("/stores");
   const trigger = page.getByRole("button", { name: "Open navigation" });
   await trigger.click();
   const dialog = page.getByRole("dialog");
@@ -110,7 +125,7 @@ test("mobile navigation traps focus, closes on Escape and updates route title", 
 test("sales recalculate after POS changes and save expected document", async ({
   page,
 }) => {
-  await page.goto("/submit/juice-hut");
+  await page.goto("/sales/juice-hut");
   for (const [label, value] of [
     ["UPI amount", "200"],
     ["Card amount", "50"],
@@ -127,7 +142,7 @@ test("sales recalculate after POS changes and save expected document", async ({
     .filter({ hasText: "Difference from POS" });
   await expect(difference).toContainText("₹50");
   await page.getByRole("button", { name: "Save daily sales" }).click();
-  await expect(page).toHaveURL(/shopSelection/);
+  await expect(page).toHaveURL(/stores/);
   const writes = await page.evaluate(() => window.__testWrites);
   expect(writes).toHaveLength(1);
   expect(writes[0].data).toMatchObject({
@@ -158,7 +173,7 @@ test("inventory cancel discards draft and save persists edits", async ({
 test("expenses add/edit/delete without re-reading the whole month", async ({
   page,
 }) => {
-  await page.goto("/daily-spends");
+  await page.goto("/expenses");
   await expect(
     page.getByRole("button", { name: "Add expense", exact: true }),
   ).toBeEnabled();
@@ -199,7 +214,7 @@ test("report reads unique documents and exports a real Excel workbook", async ({
   expect(strFromU8(archive["xl/worksheets/sheet1.xml"])).toContain("3750");
 });
 test("failed expense reads recover with retry", async ({ page }) => {
-  await page.goto("/daily-spends");
+  await page.goto("/expenses");
   await expect(
     page.getByRole("button", { name: "Add expense", exact: true }),
   ).toBeEnabled();
@@ -219,7 +234,7 @@ test("staff cannot access admin routes and guests return to login", async ({
   await page.goto("/login");
   await page.evaluate(() => localStorage.setItem("test-role", "staff"));
   await page.goto("/inventory");
-  await expect(page).toHaveURL(/shopSelection/);
+  await expect(page).toHaveURL(/stores/);
   await page.evaluate(() => localStorage.setItem("test-role", "guest"));
   await page.goto("/dashboard");
   await expect(page).toHaveURL(/login/);

@@ -12,6 +12,6 @@ export default function ProtectedRoute({ children, adminOnly = false }) {
       </div>
     );
   if (!user) return <Navigate to="/login" state={{ from: location }} replace />;
-  if (adminOnly && !isAdmin) return <Navigate to="/shopSelection" replace />;
+  if (adminOnly && !isAdmin) return <Navigate to="/stores" replace />;
   return children || <Outlet />;
 }

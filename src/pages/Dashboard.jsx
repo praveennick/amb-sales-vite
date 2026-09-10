@@ -7,6 +7,12 @@ import {
   FaFileDownload,
   FaSyncAlt,
   FaBolt,
+  FaCashRegister,
+  FaMoneyBillWave,
+  FaMobileAlt,
+  FaCreditCard,
+  FaHandHoldingUsd,
+  FaBalanceScale,
 } from "react-icons/fa";
 import { useEffect, useMemo, useState } from "react";
 import { shops } from "../lib/shops";
@@ -16,13 +22,13 @@ import SalesChart from "../components/charts/SalesChart";
 import LoadingSpinner from "../components/common/LoadingSpinner/LoadingSpinner";
 import ToastHandler from "../components/common/ToastHandler";
 const metrics = [
-  ["totalSale", "Total sales"],
-  ["posSale", "POS sales"],
-  ["cash", "Cash sales"],
-  ["upi", "UPI sales"],
-  ["card", "Card sales"],
-  ["cashGiven", "Cash given"],
-  ["remaining", "Difference from POS"],
+  ["totalSale", "Total sales", FaChartLine],
+  ["posSale", "POS sales", FaCashRegister],
+  ["cash", "Cash sales", FaMoneyBillWave],
+  ["upi", "UPI sales", FaMobileAlt],
+  ["card", "Card sales", FaCreditCard],
+  ["cashGiven", "Cash given", FaHandHoldingUsd],
+  ["remaining", "Difference from POS", FaBalanceScale],
 ];
 export default function Dashboard() {
   const [range, setRange] = useState(() => presetRange("week"));
@@ -137,7 +143,7 @@ export default function Dashboard() {
             Sales overview
           </h2>
           <p className="mt-2 text-sm text-indigo-200">
-            Track performance across all three shops.
+            Track performance across all three stores.
           </p>
         </div>
         <button
@@ -242,7 +248,7 @@ export default function Dashboard() {
                 "Across " + dates.length + " calendar days",
               ],
               [
-                "Shops reporting",
+                "Stores reporting",
                 new Set(data.map((record) => record.shopName)).size +
                   " / " +
                   shops.length,
@@ -278,7 +284,7 @@ export default function Dashboard() {
           <section className="panel">
             <h3 className="mb-5 flex items-center gap-2 text-base font-semibold">
               <FaStore className="text-violet-500" aria-hidden="true" />
-              Shop breakdown
+              Store breakdown
             </h3>
             <div className="grid gap-5 md:grid-cols-3">
               {shops.map((shop) => (
@@ -316,17 +322,14 @@ export default function Dashboard() {
             </div>
           ) : (
             <div className="grid gap-6 xl:grid-cols-2">
-              {metrics.map(([key, title]) => (
+              {metrics.map(([key, title, Icon]) => (
                 <section
                   className={`panel ${key === "totalSale" ? "xl:col-span-2" : ""}`}
                   key={key}
                 >
                   <div className="mb-5 flex flex-wrap justify-between gap-2">
                     <h3 className="flex items-center gap-2 font-semibold">
-                      <FaChartBar
-                        className="text-violet-500"
-                        aria-hidden="true"
-                      />
+                      <Icon className="text-violet-500" aria-hidden="true" />
                       {title}
                     </h3>
                     <span className="font-semibold text-violet-800">

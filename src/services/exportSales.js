@@ -32,7 +32,12 @@ export async function exportSales(records, range) {
   }));
   const rows = [
     fields.map((value) => ({
-      value: value === "remaining" ? "Difference from POS" : value,
+      value:
+        value === "shopName"
+          ? "Store"
+          : value === "remaining"
+            ? "Difference from POS"
+            : value,
       fontWeight: "bold",
       backgroundColor: "#7C3AED",
       textColor: "#FFFFFF",

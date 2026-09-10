@@ -12,10 +12,10 @@ test("dates use DD/MM/YY and remain inside their cards at narrow widths", async 
   for (const width of [320, 390, 768]) {
     await page.setViewportSize({ width, height: 844 });
     for (const [route, label] of [
-      ["/submit/juice-hut", "Sales date"],
+      ["/sales/juice-hut", "Sales date"],
       ["/dashboard", "From"],
-      ["/daily-spends", "Expense date"],
-      ["/testing", "Sales date"],
+      ["/expenses", "Expense date"],
+      ["/sales-records", "Sales date"],
     ]) {
       await page.goto(route);
       const input = page.getByLabel(label, { exact: true });
@@ -37,7 +37,7 @@ test("dates use DD/MM/YY and remain inside their cards at narrow widths", async 
       expect(bounds.left).toBeGreaterThan(bounds.cardLeft);
       expect(bounds.right).toBeLessThan(bounds.cardRight);
       expect(bounds.scroll).toBeLessThanOrEqual(bounds.viewport);
-      if (width === 390 && route === "/submit/juice-hut")
+      if (width === 390 && route === "/sales/juice-hut")
         await page.screenshot({
           path: info.outputPath("sales-mobile.png"),
           fullPage: true,

@@ -21,16 +21,16 @@ export default function AppLayout() {
   const menu = useRef(null),
     trigger = useRef(null);
   const links = [
-    { path: "/shopSelection", name: "Your shops", Icon: FaStore },
+    { path: "/stores", name: "Your stores", Icon: FaStore },
     ...(isAdmin
       ? [{ path: "/dashboard", name: "Overview", Icon: FaChartBar }]
       : []),
     ...shops.map((shop) => ({ ...shop, Icon: FaStore })),
     ...(isAdmin
       ? [
-          { path: "/daily-spends", name: "Daily spends", Icon: FaReceipt },
+          { path: "/expenses", name: "Expenses", Icon: FaReceipt },
           { path: "/inventory", name: "Inventory", Icon: FaBoxes },
-          { path: "/testing", name: "Sales records", Icon: FaRegFileAlt },
+          { path: "/sales-records", name: "Sales records", Icon: FaRegFileAlt },
         ]
       : []),
   ];

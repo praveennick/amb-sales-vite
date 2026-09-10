@@ -1,6 +1,6 @@
 # AMB Sales
 
-Responsive React and Tailwind CSS workspace for daily sales, expenses, inventory, and reporting across three shops.
+Responsive React and Tailwind CSS workspace for daily sales, expenses, inventory, and reporting across three stores.
 
 ## Run locally
 
@@ -15,11 +15,11 @@ On Windows with PowerShell script restrictions, use `npm.cmd` instead of `npm`.
 
 ## Structure
 
-- `src/pages/`: login, shop selection, sales entry, dashboard, expenses, inventory, and sales records.
+- `src/pages/`: login, store selection, sales entry, dashboard, expenses, inventory, and sales records.
 - `src/components/`: shared layout, loading/error states, and lightweight SVG charts.
 - `src/context/`: one shared Firebase authentication subscription and session state.
 - `src/services/`: database initialization, bounded report reads, and on-demand Excel export.
-- `src/lib/`: reusable shop definitions, dates, currency, sales, and stock calculations.
+- `src/lib/`: reusable store definitions, dates, currency, sales, and stock calculations.
 - `src/index.css`: Tailwind theme, base rules, and shared utility compositions.
 - `tests/`: calculation tests, isolated browser fixtures, and production smoke tests.
 
@@ -29,7 +29,7 @@ Visible dates use `DD/MM/YY`; the shared date field preserves native calendar se
 
 ## Behavior and data compatibility
 
-Existing URLs and Firestore paths are preserved:
+Routes use /stores, /sales/:store, /expenses, and /sales-records. Previous URLs redirect to their new equivalents. Dashboard, inventory, and login URLs remain the same. Store wording is used throughout the interface and exports; existing Firestore paths and field names are preserved:
 
 - Sales: `shops/{shopName}/{DD-MM-YYYY}/data`.
 - Expenses: `dailySpends/{DD-MM-YYYY}/spends/{id}`.

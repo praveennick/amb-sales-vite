@@ -175,14 +175,14 @@ export default function InventoryPage() {
             STOCK, SORTED
           </p>
           <h2 className="mt-2 text-2xl font-semibold tracking-tight">
-            Shop inventory
+            Store inventory
           </h2>
           <p className="mt-2 text-sm text-indigo-200">
             Track what comes in, what sells, and what’s left.
           </p>
         </div>
         <label className="w-full sm:w-72">
-          <span className="field-label text-indigo-200">Shop</span>
+          <span className="field-label text-indigo-200">Store</span>
           <select
             className="field"
             value={shop}

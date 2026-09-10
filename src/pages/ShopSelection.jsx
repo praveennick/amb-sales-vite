@@ -22,11 +22,11 @@ export default function ShopSelection() {
           Welcome, {user.displayName || user.email?.split("@")[0]}
         </h2>
         <p className="mt-3 text-indigo-100/80">
-          Choose a shop to record today’s sales.
+          Choose a store to record today’s sales.
         </p>
       </section>
       <div>
-        <h2 className="text-xl font-semibold">Your shops</h2>
+        <h2 className="text-xl font-semibold">Your stores</h2>
         <p className="mt-1 text-sm text-slate-500">
           Keep every counter up to date.
         </p>

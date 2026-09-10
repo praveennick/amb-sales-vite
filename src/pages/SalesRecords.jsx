@@ -59,7 +59,7 @@ export default function SalesRecords() {
           Sales records
         </h2>
         <p className="mt-2 text-sm text-indigo-200">
-          Review the original daily entries for each shop.
+          Review the original daily entries for each store.
         </p>
       </div>
       <div className="panel flex flex-wrap items-end gap-4">
@@ -108,9 +108,11 @@ export default function SalesRecords() {
                           className="grid grid-cols-2 gap-3 py-3 text-xs"
                         >
                           <dt className="break-words text-slate-500">
-                            {key === "remaining"
-                              ? "Difference from POS"
-                              : key.replace(/([A-Z])/g, " $1")}
+                            {key === "shopName"
+                              ? "Store"
+                              : key === "remaining"
+                                ? "Difference from POS"
+                                : key.replace(/([A-Z])/g, " $1")}
                           </dt>
                           <dd className="break-words text-right font-medium">
                             {record[key] == null

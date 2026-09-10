@@ -44,7 +44,7 @@ export default function Login() {
             ? from
             : isAdmin
               ? "/dashboard"
-              : "/shopSelection"
+              : "/stores"
         }
         replace
       />
@@ -61,7 +61,7 @@ export default function Login() {
         </div>
         <div>
           <p className="mb-5 text-sm font-medium uppercase tracking-widest text-cyan-300">
-            Every shop. One clear view.
+            Every store. One clear view.
           </p>
           <h1 className="max-w-xl text-5xl leading-tight font-semibold tracking-tight">
             A better day starts with a clear picture.
@@ -72,7 +72,7 @@ export default function Login() {
           </p>
           <div className="mt-10 grid grid-cols-3 gap-3 border-t border-indigo-800 pt-6 text-sm text-indigo-100">
             <span>Daily sales</span>
-            <span>Shop insights</span>
+            <span>Store insights</span>
             <span>Inventory</span>
           </div>
         </div>
