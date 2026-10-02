@@ -34,7 +34,7 @@ export default function Login() {
       setBusy(false);
     }
   }
-  if (loading) return <LoadingSpinner />;
+  if (loading) return <LoadingSpinner fullScreen />;
   if (user) {
     const from = location.state?.from?.pathname;
     return (

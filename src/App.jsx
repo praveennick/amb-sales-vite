@@ -18,7 +18,7 @@ const AdminAccess = lazy(() => import("./pages/AdminAccess"));
 const Records = lazy(() => import("./pages/SalesRecords"));
 function Home() {
   const { user, loading, isAdmin } = useAuth();
-  if (loading) return <LoadingSpinner />;
+  if (loading) return <LoadingSpinner fullScreen />;
   return (
     <Navigate
       to={user ? (isAdmin ? "/dashboard" : "/stores") : "/login"}
@@ -32,7 +32,7 @@ export default function App() {
       <AuthProvider>
         <BrowserRouter>
           <ToastContainer limit={3} />
-          <Suspense fallback={<LoadingSpinner />}>
+          <Suspense fallback={<LoadingSpinner fullScreen />}>
             <Routes>
               <Route path="/login" element={<Login />} />
               {[

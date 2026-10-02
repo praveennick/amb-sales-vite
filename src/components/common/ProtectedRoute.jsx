@@ -4,7 +4,7 @@ import LoadingSpinner from "./LoadingSpinner/LoadingSpinner";
 export default function ProtectedRoute({ children, adminOnly = false }) {
   const { user, loading, error, isAdmin } = useAuth();
   const location = useLocation();
-  if (loading) return <LoadingSpinner />;
+  if (loading) return <LoadingSpinner fullScreen />;
   if (error)
     return (
       <div role="alert" className="panel m-6">

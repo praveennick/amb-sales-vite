@@ -178,7 +178,7 @@ export default function AppLayout() {
           className="mx-auto w-full max-w-[1600px] p-4 sm:p-6 xl:p-8"
         >
           <ErrorBoundary key={location.pathname}>
-            <Suspense fallback={<LoadingSpinner />}>
+            <Suspense fallback={<LoadingSpinner fullScreen />}>
               <Outlet />
             </Suspense>
           </ErrorBoundary>
