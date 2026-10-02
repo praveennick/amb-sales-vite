@@ -10,7 +10,12 @@ import {
 } from "react-icons/fa";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { db, doc, setDoc } from "../services/firebaseDb";
+import {
+  db,
+  doc,
+  getDoc,
+  writeBatch,
+} from "../services/firebaseDb";
 import { useAuth } from "../context/auth";
 import {
   calculateSale,
@@ -66,8 +71,26 @@ export default function DataSubmission({ shopName }) {
     if (Object.keys(validation).length || !date) return;
     setSaving(true);
     try {
-      await setDoc(doc(db, "shops", shopName, documentDate(date), "data"), {
-        ...data,
+      const reference = doc(
+        db,
+        "shops",
+        shopName,
+        documentDate(date),
+        "data",
+      );
+      const existing = await getDoc(reference);
+      if (
+        existing.exists() &&
+        !window.confirm(
+          `Sales already exist for ${shopName} on ${date}. Replace them and keep the previous version in history?`,
+        )
+      ) {
+        return;
+      }
+      const payload = {
+        ...Object.fromEntries(
+          Object.entries(data).map(([key, value]) => [key, Number(value)]),
+        ),
         ...totals,
         shopName,
         submittedBy: user.email,
@@ -75,7 +98,25 @@ export default function DataSubmission({ shopName }) {
           documentDate(localDate()) +
           " " +
           new Date().toTimeString().slice(0, 8),
-      });
+      };
+      const batch = writeBatch(db);
+      if (existing.exists()) {
+        const historyReference = doc(
+          db,
+          "shops",
+          shopName,
+          documentDate(date),
+          "history",
+          crypto.randomUUID(),
+        );
+        batch.set(historyReference, {
+          previous: existing.data(),
+          replacedBy: user.email,
+          replacedAt: new Date().toISOString(),
+        });
+      }
+      batch.set(reference, payload);
+      await batch.commit();
       ToastHandler.success("Sales saved successfully.");
       navigate("/stores");
     } catch {

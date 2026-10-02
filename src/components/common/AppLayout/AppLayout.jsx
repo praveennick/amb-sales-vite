@@ -15,6 +15,36 @@ import { useAuth } from "../../../context/auth";
 import { shops } from "../../../lib/shops";
 import LoadingSpinner from "../LoadingSpinner/LoadingSpinner";
 import ErrorBoundary from "../ErrorBoundary";
+
+function ProfileAvatar({ user }) {
+  const [imageFailed, setImageFailed] = useState(false);
+
+  useEffect(() => {
+    setImageFailed(false);
+  }, [user.photoURL]);
+
+  const label = user.displayName || user.email || "User";
+
+  return (
+    <div
+      className="ml-auto flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-linear-to-br from-violet-100 to-fuchsia-100 text-sm font-bold text-violet-800 ring-4 ring-white"
+      aria-label={`${label}'s profile`}
+    >
+      {user.photoURL && !imageFailed ? (
+        <img
+          src={user.photoURL}
+          alt=""
+          referrerPolicy="no-referrer"
+          className="size-full object-cover"
+          onError={() => setImageFailed(true)}
+        />
+      ) : (
+        label.slice(0, 2).toUpperCase()
+      )}
+    </div>
+  );
+}
+
 export default function AppLayout() {
   const { user, isAdmin, logout } = useAuth();
   const [open, setOpen] = useState(false);
@@ -29,7 +59,7 @@ export default function AppLayout() {
     ...shops.map((shop) => ({ ...shop, Icon: FaStore })),
     ...(isAdmin
       ? [
-          { path: "/admin-access", name: "Admin access", Icon: FaUserShield },
+          { path: "/admin-access", name: "People & access", Icon: FaUserShield },
           { path: "/expenses", name: "Expenses", Icon: FaReceipt },
           { path: "/inventory", name: "Inventory", Icon: FaBoxes },
           { path: "/sales-records", name: "Sales records", Icon: FaRegFileAlt },
@@ -166,12 +196,7 @@ export default function AppLayout() {
               {title}
             </h1>
           </div>
-          <div
-            className="ml-auto flex size-10 shrink-0 items-center justify-center rounded-2xl bg-linear-to-br from-violet-100 to-fuchsia-100 text-sm font-bold text-violet-800 ring-4 ring-white"
-            aria-label="Your profile"
-          >
-            {(user.displayName || user.email || "U").slice(0, 2).toUpperCase()}
-          </div>
+          <ProfileAvatar user={user} />
         </header>
         <main
           id="main-content"

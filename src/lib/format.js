@@ -53,7 +53,32 @@ export function dateRange(start, end) {
 export function presetRange(preset) {
   const end = new Date();
   const start = new Date(end);
-  if (preset === "month") start.setDate(1);
-  else start.setDate(start.getDate() - 6);
+  switch (preset) {
+    case "today":
+      break;
+    case "yesterday":
+      start.setDate(start.getDate() - 1);
+      end.setDate(end.getDate() - 1);
+      break;
+    case "month":
+      start.setDate(1);
+      break;
+    case "last-month":
+      start.setMonth(start.getMonth() - 1, 1);
+      end.setDate(0);
+      break;
+    case "last-30-days":
+      start.setDate(start.getDate() - 29);
+      break;
+    case "last-90-days":
+      start.setDate(start.getDate() - 89);
+      break;
+    case "year":
+      start.setMonth(0, 1);
+      break;
+    case "week":
+    default:
+      start.setDate(start.getDate() - 6);
+  }
   return { start: localDate(start), end: localDate(end) };
 }

@@ -39,7 +39,7 @@ test("admins can grant and remove access but cannot remove themselves", async ({
   page,
 }) => {
   await page.goto("/admin-access");
-  await expect(page.getByText("admin@abc.com (you)")).toBeVisible();
+  await expect(page.getByText("admin@abc.com (you)").first()).toBeVisible();
   await expect(
     page.getByRole("button", { name: "Remove admin admin@abc.com" }),
   ).toHaveCount(0);
@@ -69,7 +69,7 @@ test("staff cannot open admin access or sales records", async ({ page }) => {
   for (const route of ["/admin-access", "/sales-records"]) {
     await page.goto(route);
     await expect(page).toHaveURL(/\/stores$/);
-    await expect(page.getByRole("link", { name: "Admin access" })).toHaveCount(
+    await expect(page.getByRole("link", { name: "People & access" })).toHaveCount(
       0,
     );
   }

@@ -39,6 +39,7 @@ test("failed sales writes retain inputs and can be retried", async ({
     page.getByRole("button", { name: "Save daily sales" }),
   ).toBeEnabled();
   await page.evaluate(() => localStorage.removeItem("test-fail"));
+  page.once("dialog", (dialog) => dialog.accept());
   await page.getByRole("button", { name: "Save daily sales" }).click();
   await expect(page).toHaveURL(/stores/);
 });
@@ -141,16 +142,29 @@ test("sales recalculate after POS changes and save expected document", async ({
     .locator("dl > div")
     .filter({ hasText: "Difference from POS" });
   await expect(difference).toContainText("₹50");
+  page.once("dialog", (dialog) => dialog.accept());
   await page.getByRole("button", { name: "Save daily sales" }).click();
   await expect(page).toHaveURL(/stores/);
   const writes = await page.evaluate(() => window.__testWrites);
-  expect(writes).toHaveLength(1);
-  expect(writes[0].data).toMatchObject({
+  expect(writes).toHaveLength(2);
+  expect(writes[0].reference).toContain("/history/");
+  expect(writes[1].data).toMatchObject({
     totalSale: 1250,
     remaining: 50,
     cash: 950,
     shopName: "The Juice Hut",
   });
+});
+
+test("unapproved accounts are blocked until an administrator approves them", async ({
+  page,
+}) => {
+  await page.addInitScript(() => localStorage.setItem("test-role", "pending"));
+  await page.goto("/stores");
+  await expect(
+    page.getByRole("heading", { name: "Access awaiting approval" }),
+  ).toBeVisible();
+  await expect(page.getByRole("link", { name: "Your stores" })).toHaveCount(0);
 });
 test("inventory cancel discards draft and save persists edits", async ({
   page,
@@ -202,8 +216,8 @@ test("report reads unique documents and exports a real Excel workbook", async ({
     page.getByRole("button", { name: "Export Excel" }),
   ).toBeEnabled();
   const reads = await page.evaluate(() => window.__testReads);
-  expect(new Set(reads).size).toBe(21);
-  expect(reads).toHaveLength(21);
+  expect(new Set(reads).size).toBe(22);
+  expect(reads).toHaveLength(22);
   const downloadEvent = page.waitForEvent("download");
   await page.getByRole("button", { name: "Export Excel" }).click();
   const download = await downloadEvent;

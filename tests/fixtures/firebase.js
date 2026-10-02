@@ -127,6 +127,7 @@ export async function updateDoc(reference, data) {
       .map((item) => (item.id === id ? { ...item, ...data } : item)),
   );
   window.__testWrites.push({ reference, data });
+  roleListeners.forEach((notify) => notify());
 }
 export async function deleteDoc(reference) {
   await wait();
@@ -144,17 +145,52 @@ export async function deleteDoc(reference) {
   window.__testWrites.push({ reference });
 }
 
+export function writeBatch() {
+  const writes = [];
+  return {
+    set(reference, data) {
+      writes.push({ reference, data });
+    },
+    async commit() {
+      await wait();
+      for (const write of writes) {
+        store.set(write.reference, write.data);
+        window.__testWrites.push(write);
+      }
+    },
+  };
+}
+
 const roleListeners = new Set();
 export function onSnapshot(reference, next) {
   const notify = () => {
     const initial =
-      localStorage.getItem("test-role") !== "staff"
+      !["staff", "pending"].includes(localStorage.getItem("test-role"))
         ? { active: true, email: "admin@abc.com" }
         : null;
     const own = store.has("admins/test-user")
       ? store.get("admins/test-user")
       : initial;
-    if (reference === "admins") {
+    if (reference === "users") {
+      next({
+        docs: [
+          {
+            id: "test-user",
+            data: () => ({ email: "admin@abc.com", active: true }),
+          },
+          {
+            id: "another-user",
+            data: () => ({ email: "manager@example.com", active: false }),
+          },
+        ],
+      });
+    } else if (reference.startsWith("users/")) {
+      const active = localStorage.getItem("test-role") !== "pending";
+      next({
+        exists: () => true,
+        data: () => ({ email: getUser()?.email, active }),
+      });
+    } else if (reference === "admins") {
       const entries = new Map([
         ["admins/test-user", own],
         ...[...store].filter(([key]) => key.startsWith("admins/")),

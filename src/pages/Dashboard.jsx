@@ -158,7 +158,7 @@ export default function Dashboard() {
         </button>
       </div>
       <section className="panel flex flex-wrap items-end gap-4">
-        <div className="w-full sm:w-44">
+        <div className="w-full sm:w-48">
           <label htmlFor="report-period" className="field-label">
             Report period
           </label>
@@ -174,8 +174,14 @@ export default function Dashboard() {
               }
             }}
           >
+            <option value="today">Today</option>
+            <option value="yesterday">Yesterday</option>
             <option value="week">Last 7 days</option>
+            <option value="last-30-days">Last 30 days</option>
+            <option value="last-90-days">Last 90 days</option>
             <option value="month">This month</option>
+            <option value="last-month">Last month</option>
+            <option value="year">This year</option>
             <option value="custom">Custom dates</option>
           </select>
         </div>

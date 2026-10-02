@@ -8,43 +8,74 @@ import ToastHandler from "../components/common/ToastHandler";
 
 export default function AuthProvider({ children }) {
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isAuthorized, setIsAuthorized] = useState(false);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   useEffect(() => {
     let generation = 0;
     let stopRole = () => {};
+    let stopAccess = () => {};
     const stopAuth = onAuthStateChanged(
       auth,
       async (next) => {
         const current = ++generation;
         stopRole();
+        stopAccess();
         setUser(next);
         setIsAdmin(false);
+        setIsAuthorized(false);
         setError(null);
         setLoading(Boolean(next));
         if (!next) return;
         try {
-          const { db, doc, onSnapshot, setDoc } =
+          const { db, doc, getDoc, onSnapshot, setDoc } =
             await import("../services/firebaseDb");
           if (current !== generation) return;
-          if (next.email) {
-            setDoc(doc(db, "users", next.uid), {
-              email: next.email,
-            }).catch(() => {});
-          }
+          const userReference = doc(db, "users", next.uid);
+          const existingUser = await getDoc(userReference);
+          if (current !== generation) return;
+          if (!existingUser.exists())
+            await setDoc(userReference, {
+              email: next.email || "",
+              active: false,
+            });
+          let accessLoaded = false;
+          let roleLoaded = false;
+          const finishLoading = () => {
+            if (accessLoaded && roleLoaded) setLoading(false);
+          };
+          stopAccess = onSnapshot(
+            userReference,
+            (snapshot) => {
+              if (current !== generation) return;
+              const data = snapshot.data();
+              // Records created before approvals were introduced remain valid.
+              setIsAuthorized(snapshot.exists() && data.active !== false);
+              accessLoaded = true;
+              finishLoading();
+            },
+            (err) => {
+              if (current !== generation) return;
+              setError(err);
+              accessLoaded = true;
+              finishLoading();
+            },
+          );
           stopRole = onSnapshot(
             doc(db, "admins", next.uid),
             (snapshot) => {
               if (current !== generation) return;
               setIsAdmin(snapshot.exists() && snapshot.data().active === true);
-              setLoading(false);
+              roleLoaded = true;
+              finishLoading();
             },
             (err) => {
               if (current !== generation) return;
               setError(err);
               setIsAdmin(false);
-              setLoading(false);
+              roleLoaded = true;
+              finishLoading();
             },
           );
         } catch (err) {
@@ -65,6 +96,7 @@ export default function AuthProvider({ children }) {
       generation++;
       stopAuth();
       stopRole();
+      stopAccess();
     };
   }, []);
   const logout = useCallback(async () => {
@@ -82,8 +114,9 @@ export default function AuthProvider({ children }) {
       error,
       logout,
       isAdmin,
+      isAuthorized: isAuthorized || isAdmin,
     }),
-    [user, loading, error, logout, isAdmin],
+    [user, loading, error, logout, isAdmin, isAuthorized],
   );
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

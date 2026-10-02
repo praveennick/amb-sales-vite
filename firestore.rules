@@ -7,6 +7,57 @@ service cloud.firestore {
         && exists(/databases/$(database)/documents/admins/$(request.auth.uid))
         && get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.active == true;
     }
+    function approved() {
+      let profile = get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+      return admin() || (signedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && (!('active' in profile) || profile.active == true));
+    }
+    function validStore(store) {
+      return store in ['The Juice Hut', 'Bubble Tea N Cotton Candy', 'Coffee N Candy'];
+    }
+    function validSale(store) {
+      let sale = request.resource.data;
+      let cash = sale.notes500 * 500 + sale.notes200 * 200
+        + sale.notes100 * 100 + sale.notes50 * 50
+        + sale.notes20 * 20 + sale.notes10 * 10
+        + sale.expenses - sale.counterCash;
+      let total = cash + sale.upi + sale.card;
+      return sale.keys().hasOnly([
+          'upi', 'card', 'expenses', 'counterCash', 'posSale', 'cashGiven',
+          'notes500', 'notes200', 'notes100', 'notes50', 'notes20', 'notes10',
+          'cash', 'totalSale', 'remaining', 'shopName', 'submittedBy',
+          'submissionDate'
+        ])
+        && sale.keys().hasAll([
+          'upi', 'card', 'expenses', 'counterCash', 'posSale', 'cashGiven',
+          'notes500', 'notes200', 'notes100', 'notes50', 'notes20', 'notes10',
+          'cash', 'totalSale', 'remaining', 'shopName', 'submittedBy',
+          'submissionDate'
+        ])
+        && sale.shopName == store
+        && sale.submittedBy == request.auth.token.email
+        && sale.submissionDate is string
+        && sale.submissionDate.size() <= 32
+        && sale.upi is number && sale.upi >= 0
+        && sale.card is number && sale.card >= 0
+        && sale.expenses is number && sale.expenses >= 0
+        && sale.counterCash is number && sale.counterCash >= 0
+        && sale.posSale is number && sale.posSale >= 0
+        && sale.cashGiven is number && sale.cashGiven >= 0
+        && sale.notes500 is int && sale.notes500 >= 0
+        && sale.notes200 is int && sale.notes200 >= 0
+        && sale.notes100 is int && sale.notes100 >= 0
+        && sale.notes50 is int && sale.notes50 >= 0
+        && sale.notes20 is int && sale.notes20 >= 0
+        && sale.notes10 is int && sale.notes10 >= 0
+        && sale.cash is number && sale.cash >= cash - 0.011 && sale.cash <= cash + 0.011
+        && sale.totalSale is number && sale.totalSale >= total - 0.011 && sale.totalSale <= total + 0.011
+        && sale.remaining is number
+        && sale.remaining >= total - sale.posSale - 0.011
+        && sale.remaining <= total - sale.posSale + 0.011;
+    }
+
     match /admins/{uid} {
       allow get: if signedIn() && (request.auth.uid == uid || admin());
       allow list: if admin();
@@ -17,19 +68,37 @@ service cloud.firestore {
       allow delete: if admin() && uid != request.auth.uid;
     }
     match /users/{uid} {
-      allow read: if admin();
-      allow create, update: if signedIn()
-        && request.auth.uid == uid
-        && request.resource.data.keys().hasOnly(['email'])
-        && request.resource.data.email == request.auth.token.email;
-      allow delete: if false;
+      allow get: if signedIn() && (request.auth.uid == uid || admin());
+      allow list: if admin();
+      allow create: if signedIn() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['email', 'active'])
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.active == false;
+      allow update: if (signedIn() && request.auth.uid == uid
+          && request.resource.data.keys().hasOnly(['email', 'active'])
+          && request.resource.data.email == request.auth.token.email
+          && request.resource.data.active == resource.data.active)
+        || (admin()
+          && request.resource.data.keys().hasOnly(['email', 'active'])
+          && request.resource.data.email is string
+          && request.resource.data.active is bool);
+      allow delete: if admin() && uid != request.auth.uid;
     }
     match /shops/{store}/{date}/data {
-      allow read, delete: if admin();
-      // Staff retain the existing ability to submit/replace daily store sales.
-      allow create, update: if signedIn()
-        && store in ['The Juice Hut', 'Bubble Tea N Cotton Candy', 'Coffee N Candy']
-        && request.resource.data.shopName == store;
+      allow get: if approved();
+      allow list, delete: if admin();
+      allow create, update: if approved() && validStore(store)
+        && date.matches('^[0-9]{2}-[0-9]{2}-[0-9]{4}$')
+        && validSale(store);
+    }
+    match /shops/{store}/{date}/history/{id} {
+      allow read: if admin();
+      allow create: if approved() && validStore(store)
+        && request.resource.data.keys().hasOnly(['previous', 'replacedBy', 'replacedAt'])
+        && request.resource.data.previous is map
+        && request.resource.data.replacedBy == request.auth.token.email
+        && request.resource.data.replacedAt is string;
+      allow update, delete: if false;
     }
     match /dailySpends/{date}/spends/{id} {
       allow read, write: if admin();

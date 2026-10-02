@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { FaUserShield, FaTrashAlt } from "react-icons/fa";
+import { FaUserShield, FaTrashAlt, FaUsers, FaUserClock } from "react-icons/fa";
 import { useAuth } from "../context/auth";
 import {
   db,
@@ -7,11 +7,13 @@ import {
   doc,
   onSnapshot,
   deleteDoc,
+  updateDoc,
 } from "../services/firebaseDb";
 
 export default function AdminAccess() {
   const { user, isAdmin } = useAuth();
   const [admins, setAdmins] = useState([]);
+  const [members, setMembers] = useState([]);
   const [email, setEmail] = useState("");
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -34,6 +36,39 @@ export default function AdminAccess() {
       ),
     [],
   );
+  useEffect(
+    () =>
+      onSnapshot(
+        collection(db, "users"),
+        (snapshot) =>
+          setMembers(
+            snapshot.docs.map((item) => ({ ...item.data(), uid: item.id })),
+          ),
+        () =>
+          setError("Could not load team access. Check Firebase permissions."),
+      ),
+    [],
+  );
+  async function setMemberAccess(member, active) {
+    if (!isAdmin || busy || member.uid === user.uid) return;
+    if (
+      !window.confirm(
+        `${active ? "Approve" : "Revoke"} workspace access for ${member.email}?`,
+      )
+    )
+      return;
+    setBusy(true);
+    setError("");
+    setNotice("");
+    try {
+      await updateDoc(doc(db, "users", member.uid), { active });
+      setNotice(active ? "Team access approved." : "Team access revoked.");
+    } catch {
+      setError("Could not change team access. Please try again.");
+    } finally {
+      setBusy(false);
+    }
+  }
   async function save(event) {
     event.preventDefault();
     const address = email.trim().toLowerCase();
@@ -80,10 +115,10 @@ export default function AdminAccess() {
       <div className="page-hero">
         <h2 className="flex items-center gap-3 text-2xl font-semibold">
           <FaUserShield aria-hidden="true" />
-          Admin access
+          People &amp; access
         </h2>
         <p className="mt-2 text-sm text-indigo-200">
-          Manage who can view reports, delete sales, and manage your workspace.
+          Approve team members and choose who can manage the workspace.
         </p>
       </div>
       {error && (
@@ -96,8 +131,58 @@ export default function AdminAccess() {
           {notice}
         </p>
       )}
+      <section className="panel space-y-4">
+        <div className="flex items-start gap-3">
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-violet-100 text-violet-700">
+            <FaUsers aria-hidden="true" />
+          </span>
+          <div>
+            <h3 className="font-semibold">Team members</h3>
+            <p className="mt-1 text-sm text-slate-500">
+              New accounts remain blocked until an administrator approves them.
+            </p>
+          </div>
+        </div>
+        {[...members]
+          .sort((a, b) => Number(a.active !== false) - Number(b.active !== false))
+          .map((member) => {
+            const active = member.active !== false;
+            return (
+              <div
+                key={member.uid}
+                className="grid gap-3 border-t border-slate-100 pt-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center"
+              >
+                <div className="min-w-0">
+                  <p className="break-all font-medium">
+                    {member.email || "Unknown account"}
+                    {member.uid === user.uid ? " (you)" : ""}
+                  </p>
+                  <p
+                    className={`mt-1 text-xs font-medium ${active ? "text-emerald-700" : "text-amber-700"}`}
+                  >
+                    {active ? "Approved" : "Awaiting approval"}
+                  </p>
+                </div>
+                {member.uid !== user.uid && (
+                  <button
+                    className="btn-secondary w-full justify-center sm:w-36"
+                    disabled={busy}
+                    onClick={() => setMemberAccess(member, !active)}
+                  >
+                    {active ? "Revoke access" : "Approve access"}
+                  </button>
+                )}
+              </div>
+            );
+          })}
+      </section>
       <form className="panel space-y-4" onSubmit={save}>
-        <h3 className="font-semibold">Add an administrator</h3>
+        <div className="flex items-center gap-3">
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-indigo-100 text-indigo-700">
+            <FaUserClock aria-hidden="true" />
+          </span>
+          <h3 className="font-semibold">Add an administrator</h3>
+        </div>
         <p className="text-sm text-slate-500">
           Enter the email address the person uses to sign in.
         </p>
@@ -126,7 +211,7 @@ export default function AdminAccess() {
           admins.map((admin) => (
             <div
               key={admin.uid}
-              className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-4"
+              className="grid gap-3 border-t border-slate-100 pt-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center"
             >
               <div className="min-w-0">
                 <p className="break-all font-medium">
@@ -139,7 +224,7 @@ export default function AdminAccess() {
               </div>
               {admin.uid !== user.uid && (
                 <button
-                  className="btn-secondary text-red-700"
+                  className="btn-secondary w-full justify-center text-red-700 sm:w-36"
                   disabled={busy}
                   onClick={() => remove(admin)}
                   aria-label={`Remove admin ${admin.email || "administrator"}`}

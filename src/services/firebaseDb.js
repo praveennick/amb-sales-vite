@@ -13,4 +13,5 @@ export {
   addDoc,
   updateDoc,
   deleteDoc,
+  writeBatch,
 } from "firebase/firestore";

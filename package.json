@@ -9,6 +9,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "node --test tests/unit/*.test.js",
+    "test:rules": "firebase emulators:exec --only firestore \"node --test tests/firestore/*.test.js\"",
     "test:e2e": "playwright test",
     "test:production": "npm run build && playwright test --config playwright.production.config.js",
     "format": "prettier --write \"src/**/*.{js,jsx,css}\" tests *.js *.html package.json README.md"
@@ -26,6 +27,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.25.0",
+    "@firebase/rules-unit-testing": "^4.0.1",
     "@playwright/test": "^1.63.0",
     "@types/react": "^19.1.2",
     "@types/react-dom": "^19.1.2",
@@ -34,6 +36,7 @@
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.19",
     "fflate": "^0.8.3",
+    "firebase-tools": "^15.32.1",
     "globals": "^16.0.0",
     "prettier": "^3.9.6",
     "vite": "^6.3.5",
