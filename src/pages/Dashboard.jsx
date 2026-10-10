@@ -13,10 +13,17 @@ import {
   FaCreditCard,
   FaHandHoldingUsd,
   FaBalanceScale,
+  FaExclamationCircle,
 } from "react-icons/fa";
 import { useEffect, useMemo, useState } from "react";
 import { shops } from "../lib/shops";
-import { currency, dateRange, localDate, presetRange } from "../lib/format";
+import {
+  currency,
+  dateRange,
+  localDate,
+  presetRange,
+  submissionStatusDate,
+} from "../lib/format";
 import { readSales } from "../services/reports";
 import SalesChart from "../components/charts/SalesChart";
 import LoadingSpinner from "../components/common/LoadingSpinner/LoadingSpinner";
@@ -31,6 +38,8 @@ const metrics = [
   ["remaining", "Difference from POS", FaBalanceScale],
 ];
 export default function Dashboard() {
+  const [clock, setClock] = useState(() => new Date());
+  const statusDate = submissionStatusDate(clock);
   const [range, setRange] = useState(() => presetRange("week"));
   const [preset, setPreset] = useState("week"),
     [records, setRecords] = useState([]);
@@ -40,6 +49,10 @@ export default function Dashboard() {
     [exporting, setExporting] = useState(false);
   const dates = useMemo(() => dateRange(range.start, range.end), [range]);
   const valid = dates.length > 0 && dates.length <= 366;
+  useEffect(() => {
+    const timer = window.setInterval(() => setClock(new Date()), 30000);
+    return () => window.clearInterval(timer);
+  }, []);
   useEffect(() => {
     if (!valid) return;
     let cancelled = false;
@@ -53,7 +66,7 @@ export default function Dashboard() {
       before.setDate(before.getDate() - 2);
       try {
         const next = await readSales(
-          [...dates, localDate(yesterday), localDate(before)],
+          [...dates, statusDate, localDate(yesterday), localDate(before)],
           controller.signal,
         );
         if (!cancelled) setRecords(next);
@@ -71,7 +84,7 @@ export default function Dashboard() {
       controller.abort();
       clearTimeout(timer);
     };
-  }, [dates, valid, revision]);
+  }, [dates, valid, revision, statusDate]);
   const data = useMemo(
     () =>
       records.filter(
@@ -90,6 +103,10 @@ export default function Dashboard() {
   before.setDate(before.getDate() - 2);
   const yesterdayData = records.filter(
     (record) => record.isoDate === localDate(yesterday),
+  );
+  const statusData = records.filter((record) => record.isoDate === statusDate);
+  const missingForStatus = shops.filter(
+    (shop) => !statusData.some((record) => record.shopName === shop.name),
   );
   const yesterdayTotal = yesterdayData.reduce(
     (sum, record) => sum + (Number(record.totalSale) || 0),
@@ -213,6 +230,24 @@ export default function Dashboard() {
           <FaSyncAlt aria-hidden="true" /> Refresh
         </button>
       </section>
+      {!loading && !error && (
+        <section className={`panel flex items-start gap-3 ${missingForStatus.length ? "border-amber-200 bg-amber-50" : "border-emerald-200 bg-emerald-50"}`}>
+          <FaExclamationCircle className={missingForStatus.length ? "mt-0.5 shrink-0 text-amber-600" : "mt-0.5 shrink-0 text-emerald-600"} aria-hidden="true" />
+          <div>
+            <h3 className="font-semibold">
+              Yesterday’s submission status
+            </h3>
+            <p className="mt-0.5 text-xs text-slate-500">
+              Business day closes at 12:00 AM IST.
+            </p>
+            <p className="mt-1 text-sm text-slate-600">
+              {missingForStatus.length
+                ? `Waiting for ${missingForStatus.map((shop) => shop.name).join(", ")}.`
+                : "All stores have submitted sales for yesterday."}
+            </p>
+          </div>
+        </section>
+      )}
       {!valid ? (
         <p role="alert" className="panel text-amber-800">
           Choose a valid date range of up to 366 days.

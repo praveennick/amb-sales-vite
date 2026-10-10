@@ -44,6 +44,12 @@
   .btn-secondary {
     @apply inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-violet-200 bg-white px-4 py-3 text-sm font-medium text-violet-700 shadow-sm transition-colors hover:bg-violet-50;
   }
+  .btn-success {
+    @apply inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-emerald-600 bg-emerald-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:border-emerald-700 hover:bg-emerald-700 focus-visible:outline-emerald-600;
+  }
+  .btn-danger {
+    @apply inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700 shadow-sm transition-colors hover:border-red-300 hover:bg-red-100 focus-visible:outline-red-600;
+  }
   .page-hero {
     @apply relative isolate overflow-hidden rounded-3xl border border-white/20 bg-linear-to-br from-slate-950 via-indigo-950 to-violet-900 p-6 text-white shadow-xl shadow-indigo-950/10 sm:p-8;
   }

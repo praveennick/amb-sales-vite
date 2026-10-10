@@ -11,6 +11,38 @@ export const localDate = (date = new Date()) =>
     String(date.getMonth() + 1).padStart(2, "0"),
     String(date.getDate()).padStart(2, "0"),
   ].join("-");
+export const indiaDate = (date = new Date()) => {
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Asia/Kolkata",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    })
+      .formatToParts(date)
+      .filter((part) => part.type !== "literal")
+      .map((part) => [part.type, part.value]),
+  );
+  return `${parts.year}-${parts.month}-${parts.day}`;
+};
+export const submissionStatusDate = (date = new Date()) => {
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat("en-GB", {
+      timeZone: "Asia/Kolkata",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    })
+      .formatToParts(date)
+      .filter((part) => part.type !== "literal")
+      .map((part) => [part.type, part.value]),
+  );
+  const businessDate = new Date(
+    Date.UTC(Number(parts.year), Number(parts.month) - 1, Number(parts.day)),
+  );
+  businessDate.setUTCDate(businessDate.getUTCDate() - 1);
+  return businessDate.toISOString().slice(0, 10);
+};
 export const documentDate = (date) => date.split("-").reverse().join("-");
 export const displayDate = (value) => {
   if (!value) return "DD/MM/YY";
@@ -21,10 +53,18 @@ export const displayDate = (value) => {
     parts[0].length === 4 ? parts : [...parts].reverse();
   return `${day}/${month}/${year.slice(-2)}`;
 };
-export const displayTimestamp = (value) =>
-  value
-    ? displayDate(value) + (value.length > 10 ? value.slice(10) : "")
-    : "N/A";
+export const displayTimestamp = (value) => {
+  if (!value) return "N/A";
+  if (typeof value?.toDate === "function")
+    return value.toDate().toLocaleString("en-IN", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  return displayDate(value) + (value.length > 10 ? value.slice(10) : "");
+};
 export const weekday = (date) =>
   new Date(date + "T12:00:00").toLocaleDateString("en-GB", {
     weekday: "short",

@@ -50,8 +50,7 @@ export default function AuthProvider({ children }) {
             (snapshot) => {
               if (current !== generation) return;
               const data = snapshot.data();
-              // Records created before approvals were introduced remain valid.
-              setIsAuthorized(snapshot.exists() && data.active !== false);
+              setIsAuthorized(snapshot.exists() && data.active === true);
               accessLoaded = true;
               finishLoading();
             },

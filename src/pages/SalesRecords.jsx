@@ -1,5 +1,5 @@
 import DateField from "../components/common/DateField";
-import { FaRegFileAlt, FaSyncAlt, FaTrashAlt } from "react-icons/fa";
+import { FaHistory, FaRegFileAlt, FaSyncAlt, FaTrashAlt } from "react-icons/fa";
 import { useEffect, useState } from "react";
 import {
   localDate,
@@ -9,10 +9,19 @@ import {
   documentDate,
 } from "../lib/format";
 import { useAuth } from "../context/auth";
-import { db, doc, deleteDoc } from "../services/firebaseDb";
+import {
+  collection,
+  db,
+  doc,
+  getDocs,
+  serverTimestamp,
+  writeBatch,
+} from "../services/firebaseDb";
 import { shops } from "../lib/shops";
 import { readSales } from "../services/reports";
 import LoadingSpinner from "../components/common/LoadingSpinner/LoadingSpinner";
+import useConfirmDialog from "../components/common/useConfirmDialog";
+import { recordActivity } from "../services/activity";
 const fields = [
   "shopName",
   "upi",
@@ -34,7 +43,7 @@ const fields = [
   "submittedBy",
 ];
 export default function SalesRecords() {
-  const { isAdmin } = useAuth();
+  const { isAdmin, user } = useAuth();
   const [deleting, setDeleting] = useState(null);
   const [deleteError, setDeleteError] = useState("");
   const [notice, setNotice] = useState("");
@@ -43,6 +52,9 @@ export default function SalesRecords() {
   const [loading, setLoading] = useState(true),
     [error, setError] = useState(""),
     [revision, setRevision] = useState(0);
+  const [history, setHistory] = useState({});
+  const [historyOpen, setHistoryOpen] = useState(null);
+  const { confirm, confirmationDialog } = useConfirmDialog();
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
@@ -65,19 +77,20 @@ export default function SalesRecords() {
   async function removeRecord(record) {
     if (!isAdmin || deleting) return;
     const recordDate = record.isoDate;
-    if (
-      !window.confirm(
-        `Delete sales for ${record.shopName} on ${displayDate(recordDate)}? This permanently deletes this daily record and cannot be undone.`,
-      )
-    )
-      return;
+    if (!(await confirm({
+      title: "Delete sales record?",
+      message: `Delete sales for ${record.shopName} on ${displayDate(recordDate)}? Version history will remain available.`,
+      confirmLabel: "Delete record",
+      danger: true,
+    }))) return;
     setDeleting(record.shopName);
     setDeleteError("");
     setNotice("");
     try {
-      await deleteDoc(
-        doc(db, "shops", record.shopName, documentDate(recordDate), "data"),
-      );
+      const batch = writeBatch(db);
+      batch.delete(doc(db, "shops", record.shopName, documentDate(recordDate), "data"));
+      await batch.commit();
+      void recordActivity(user, "sales.deleted", { shopName: record.shopName, date: recordDate });
       setRecords((previous) =>
         previous.filter(
           (item) =>
@@ -95,8 +108,64 @@ export default function SalesRecords() {
       setDeleting(null);
     }
   }
+  async function loadHistory(shopName) {
+    if (historyOpen === shopName) return setHistoryOpen(null);
+    setHistoryOpen(shopName);
+    try {
+      const snapshot = await getDocs(collection(db, "shops", shopName, documentDate(date), "data", "history"));
+      setHistory((previous) => ({
+        ...previous,
+        [shopName]: snapshot.docs
+          .map((item) => ({ ...item.data(), id: item.id }))
+          .sort((a, b) => (b.replacedAt?.seconds || 0) - (a.replacedAt?.seconds || 0)),
+      }));
+    } catch {
+      setDeleteError("Could not load sales history. Please try again.");
+    }
+  }
+  async function restoreVersion(record, version, fallbackShopName) {
+    const shopName = record?.shopName || fallbackShopName || version.previous?.shopName;
+    const recordDate = record?.isoDate || date;
+    if (!(await confirm({
+      title: "Restore this version?",
+      message: `Restore the version replaced ${displayTimestamp(version.replacedAt)} for ${shopName}?${record ? " The current record will also be preserved." : ""}`,
+      confirmLabel: "Restore version",
+    }))) return;
+    setDeleting(shopName);
+    try {
+      const revisionId = crypto.randomUUID();
+      const pathDate = documentDate(recordDate);
+      const batch = writeBatch(db);
+      if (record) {
+        const current = Object.fromEntries(
+          Object.entries(record).filter(([key]) => !["date", "isoDate"].includes(key)),
+        );
+        batch.set(doc(db, "shops", shopName, pathDate, "data", "history", revisionId), {
+          previous: current,
+          replacedBy: user.email,
+          replacedAt: serverTimestamp(),
+        });
+      }
+      batch.set(doc(db, "shops", shopName, pathDate, "data"), {
+        ...version.previous,
+        submittedBy: user.email,
+        submissionDate: serverTimestamp(),
+        revisionId,
+      });
+      await batch.commit();
+      void recordActivity(user, "sales.restored", { shopName, date: recordDate });
+      setNotice("Previous sales version restored.");
+      setRevision((value) => value + 1);
+      setHistoryOpen(null);
+    } catch {
+      setDeleteError("Could not restore this sales version.");
+    } finally {
+      setDeleting(null);
+    }
+  }
   return (
     <div className="space-y-6">
+      {confirmationDialog}
       <div className="page-hero">
         <div className="hero-orb" />
         <h2 className="flex items-center gap-3 text-2xl font-semibold">
@@ -186,6 +255,38 @@ export default function SalesRecords() {
                         </div>
                       ))}
                     </dl>
+                    <button
+                      type="button"
+                      className="btn-secondary mt-5 w-full justify-center"
+                      disabled={Boolean(deleting)}
+                      onClick={() => loadHistory(shop.name)}
+                    >
+                      <FaHistory aria-hidden="true" />
+                      {historyOpen === shop.name ? "Hide history" : "View history"}
+                    </button>
+                    {historyOpen === shop.name && (
+                      <div className="mt-4 space-y-3 border-t border-slate-100 pt-4">
+                        <h4 className="text-sm font-semibold">Version history</h4>
+                        {!history[shop.name]?.length ? (
+                          <p className="text-xs text-slate-500">No previous versions.</p>
+                        ) : (
+                          history[shop.name].map((version) => (
+                            <div key={version.id} className="rounded-xl bg-slate-50 p-3 text-xs">
+                              <p className="font-medium">Replaced {displayTimestamp(version.replacedAt)}</p>
+                              <p className="mt-1 text-slate-500">By {version.replacedBy}</p>
+                              <p className="mt-1 font-semibold text-violet-700">{currency(version.previous?.totalSale)}</p>
+                              <button
+                                className="btn-secondary mt-3 w-full justify-center"
+                                disabled={Boolean(deleting)}
+                                onClick={() => restoreVersion(record, version)}
+                              >
+                                Restore version
+                              </button>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    )}
                     {isAdmin && (
                       <button
                         type="button"

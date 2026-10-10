@@ -6,7 +6,14 @@ import {
   assertSucceeds,
   initializeTestEnvironment,
 } from "@firebase/rules-unit-testing";
-import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
+import {
+  doc,
+  getDoc,
+  serverTimestamp,
+  setDoc,
+  updateDoc,
+  writeBatch,
+} from "firebase/firestore";
 
 const projectId = "demo-amb-sales-rules";
 let environment;
@@ -29,7 +36,8 @@ const sale = (email = "staff@example.com") => ({
   remaining: 0,
   shopName: "The Juice Hut",
   submittedBy: email,
-  submissionDate: "02-10-2026 12:00:00",
+  submissionDate: serverTimestamp(),
+  revisionId: "initial-revision-0001",
 });
 
 before(async () => {
@@ -103,17 +111,25 @@ test("approved staff can write valid sales but cannot forge values", async () =>
   await assertFails(setDoc(reference, { ...sale(), unexpected: true }));
 });
 
-test("replacement history is immutable and visible only to admins", async () => {
+test("replacements require matching immutable history visible only to admins", async () => {
   const staff = environment
     .authenticatedContext("approved", { email: "staff@example.com" })
     .firestore();
-  const path = ["shops", "The Juice Hut", "02-10-2026", "history", "version-1"];
+  const dataPath = ["shops", "The Juice Hut", "02-10-2026", "data"];
+  const path = ["shops", "The Juice Hut", "02-10-2026", "data", "history", "version-2"];
+  const current = (await getDoc(doc(staff, ...dataPath))).data();
   const history = {
-    previous: sale(),
+    previous: current,
     replacedBy: "staff@example.com",
-    replacedAt: "2026-10-02T12:00:00.000Z",
+    replacedAt: serverTimestamp(),
   };
-  await assertSucceeds(setDoc(doc(staff, ...path), history));
+  await assertFails(
+    setDoc(doc(staff, ...dataPath), { ...sale(), revisionId: "version-without-history" }),
+  );
+  const batch = writeBatch(staff);
+  batch.set(doc(staff, ...path), history);
+  batch.set(doc(staff, ...dataPath), { ...sale(), revisionId: "version-2" });
+  await assertSucceeds(batch.commit());
   await assertFails(getDoc(doc(staff, ...path)));
   await assertFails(updateDoc(doc(staff, ...path), { replacedAt: "changed" }));
   const admin = environment

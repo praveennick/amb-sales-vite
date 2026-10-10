@@ -11,7 +11,7 @@ service cloud.firestore {
       let profile = get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
       return admin() || (signedIn()
         && exists(/databases/$(database)/documents/users/$(request.auth.uid))
-        && (!('active' in profile) || profile.active == true));
+        && profile.active == true);
     }
     function validStore(store) {
       return store in ['The Juice Hut', 'Bubble Tea N Cotton Candy', 'Coffee N Candy'];
@@ -27,18 +27,19 @@ service cloud.firestore {
           'upi', 'card', 'expenses', 'counterCash', 'posSale', 'cashGiven',
           'notes500', 'notes200', 'notes100', 'notes50', 'notes20', 'notes10',
           'cash', 'totalSale', 'remaining', 'shopName', 'submittedBy',
-          'submissionDate'
+          'submissionDate', 'revisionId'
         ])
         && sale.keys().hasAll([
           'upi', 'card', 'expenses', 'counterCash', 'posSale', 'cashGiven',
           'notes500', 'notes200', 'notes100', 'notes50', 'notes20', 'notes10',
           'cash', 'totalSale', 'remaining', 'shopName', 'submittedBy',
-          'submissionDate'
+          'submissionDate', 'revisionId'
         ])
         && sale.shopName == store
         && sale.submittedBy == request.auth.token.email
-        && sale.submissionDate is string
-        && sale.submissionDate.size() <= 32
+        && sale.submissionDate == request.time
+        && sale.revisionId is string
+        && sale.revisionId.size() >= 16
         && sale.upi is number && sale.upi >= 0
         && sale.card is number && sale.card >= 0
         && sale.expenses is number && sale.expenses >= 0
@@ -87,21 +88,55 @@ service cloud.firestore {
     match /shops/{store}/{date}/data {
       allow get: if approved();
       allow list, delete: if admin();
-      allow create, update: if approved() && validStore(store)
+      allow create: if approved() && validStore(store)
         && date.matches('^[0-9]{2}-[0-9]{2}-[0-9]{4}$')
         && validSale(store);
+      allow update: if approved() && validStore(store)
+        && date.matches('^[0-9]{2}-[0-9]{2}-[0-9]{4}$')
+        && validSale(store)
+        && request.resource.data.revisionId != resource.data.revisionId
+        && existsAfter(/databases/$(database)/documents/shops/$(store)/$(date)/data/history/$(request.resource.data.revisionId))
+        && getAfter(/databases/$(database)/documents/shops/$(store)/$(date)/data/history/$(request.resource.data.revisionId)).data.previous == resource.data;
     }
-    match /shops/{store}/{date}/history/{id} {
+    match /shops/{store}/{date}/data/history/{id} {
       allow read: if admin();
       allow create: if approved() && validStore(store)
         && request.resource.data.keys().hasOnly(['previous', 'replacedBy', 'replacedAt'])
-        && request.resource.data.previous is map
+        && request.resource.data.previous == get(/databases/$(database)/documents/shops/$(store)/$(date)/data).data
         && request.resource.data.replacedBy == request.auth.token.email
-        && request.resource.data.replacedAt is string;
+        && request.resource.data.replacedAt == request.time
+        && id == getAfter(/databases/$(database)/documents/shops/$(store)/$(date)/data).data.revisionId;
+      allow update, delete: if false;
+    }
+    match /activity/{id} {
+      allow read: if admin();
+      allow create: if approved()
+        && request.resource.data.keys().hasOnly(['action', 'actorEmail', 'actorUid', 'createdAt', 'details'])
+        && request.resource.data.actorEmail == request.auth.token.email
+        && request.resource.data.actorUid == request.auth.uid
+        && request.resource.data.action is string
+        && request.resource.data.details is map
+        && request.resource.data.createdAt == request.time;
       allow update, delete: if false;
     }
     match /dailySpends/{date}/spends/{id} {
-      allow read, write: if admin();
+      allow read, delete: if admin();
+      allow create: if admin()
+        && request.resource.data.keys().hasOnly(['title', 'price', 'submittedBy', 'submissionDate'])
+        && request.resource.data.title is string
+        && request.resource.data.title.size() > 0
+        && request.resource.data.price is number
+        && request.resource.data.price > 0
+        && request.resource.data.submittedBy == request.auth.token.email
+        && request.resource.data.submissionDate == request.time;
+      allow update: if admin()
+        && request.resource.data.keys().hasOnly(['title', 'price', 'submittedBy', 'submissionDate'])
+        && request.resource.data.title is string
+        && request.resource.data.title.size() > 0
+        && request.resource.data.price is number
+        && request.resource.data.price > 0
+        && request.resource.data.submittedBy == resource.data.submittedBy
+        && request.resource.data.submissionDate == resource.data.submissionDate;
     }
     match /inventory/{store}/items/{id} {
       allow read, write: if admin();

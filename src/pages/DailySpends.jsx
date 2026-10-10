@@ -14,9 +14,8 @@ import {
   collection,
   doc,
   getDocs,
-  addDoc,
-  updateDoc,
-  deleteDoc,
+  serverTimestamp,
+  writeBatch,
 } from "../services/firebaseDb";
 import { useAuth } from "../context/auth";
 import {
@@ -29,6 +28,7 @@ import {
 import { mapLimit } from "../lib/async";
 import SalesChart from "../components/charts/SalesChart";
 import LoadingSpinner from "../components/common/LoadingSpinner/LoadingSpinner";
+import { recordActivity } from "../services/activity";
 export default function DailySpends() {
   const { user } = useAuth();
   const [date, setDate] = useState(localDate),
@@ -118,18 +118,23 @@ export default function DailySpends() {
         const payload = {
           ...values,
           submittedBy: user.email,
-          submissionDate:
-            documentDate(localDate()) +
-            " " +
-            new Date().toTimeString().slice(0, 8),
+          submissionDate: serverTimestamp(),
         };
-        const reference = await addDoc(
-          collection(db, "dailySpends", documentDate(date), "spends"),
-          payload,
+        const id = crypto.randomUUID();
+        const reference = doc(
+          db,
+          "dailySpends",
+          documentDate(date),
+          "spends",
+          id,
         );
+        const batch = writeBatch(db);
+        batch.set(reference, payload);
+        await batch.commit();
+        void recordActivity(user, "expense.created", { date, title: payload.title, price: payload.price });
         setItems((previous) => [
           ...previous,
-          { ...payload, id: reference.id, date },
+          { ...payload, id, date },
         ]);
         setTitle("");
         setPrice("");
@@ -142,7 +147,10 @@ export default function DailySpends() {
           item.id,
         );
         if (action === "edit") {
-          await updateDoc(reference, values);
+          const batch = writeBatch(db);
+          batch.update(reference, values);
+          await batch.commit();
+          void recordActivity(user, "expense.updated", { date: item.date, title: values.title, price: values.price });
           setItems((previous) =>
             previous.map((row) =>
               row.id === item.id && row.date === item.date
@@ -152,7 +160,10 @@ export default function DailySpends() {
           );
           setEditing(null);
         } else {
-          await deleteDoc(reference);
+          const batch = writeBatch(db);
+          batch.delete(reference);
+          await batch.commit();
+          void recordActivity(user, "expense.deleted", { date: item.date, title: item.title });
           setItems((previous) =>
             previous.filter(
               (row) => row.id !== item.id || row.date !== item.date,

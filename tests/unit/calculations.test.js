@@ -1,7 +1,12 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { calculateSale, emptySale, validateSale } from "../../src/lib/sales.js";
-import { dateRange, localDate, documentDate } from "../../src/lib/format.js";
+import {
+  dateRange,
+  localDate,
+  documentDate,
+  submissionStatusDate,
+} from "../../src/lib/format.js";
 import { stockLeft, validateStock } from "../../src/lib/inventory.js";
 import { mapLimit } from "../../src/lib/async.js";
 import {
@@ -91,6 +96,11 @@ test("date ranges cover leap days, month and year boundaries, and reject invalid
     documentDate(localDate(new Date(2026, 0, 2, 0, 30))),
     "02-01-2026",
   );
+});
+test("submission status switches business day at midnight IST", () => {
+  assert.equal(submissionStatusDate(new Date("2026-10-11T18:29:00Z")), "2026-10-10");
+  assert.equal(submissionStatusDate(new Date("2026-10-11T18:30:00Z")), "2026-10-11");
+  assert.equal(submissionStatusDate(new Date("2026-10-12T17:00:00Z")), "2026-10-11");
 });
 test("stock arithmetic supports decimal units and validation", () => {
   assert.equal(

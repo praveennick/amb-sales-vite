@@ -1,24 +1,35 @@
 import { useEffect, useState } from "react";
-import { FaUserShield, FaTrashAlt, FaUsers, FaUserClock } from "react-icons/fa";
+import {
+  FaBan,
+  FaCheck,
+  FaUserShield,
+  FaTrashAlt,
+  FaUsers,
+  FaUserClock,
+} from "react-icons/fa";
 import { useAuth } from "../context/auth";
 import {
   db,
   collection,
   doc,
   onSnapshot,
-  deleteDoc,
-  updateDoc,
+  writeBatch,
 } from "../services/firebaseDb";
+import useConfirmDialog from "../components/common/useConfirmDialog";
+import { recordActivity } from "../services/activity";
+import { displayTimestamp } from "../lib/format";
 
 export default function AdminAccess() {
   const { user, isAdmin } = useAuth();
   const [admins, setAdmins] = useState([]);
   const [members, setMembers] = useState([]);
+  const [activities, setActivities] = useState([]);
   const [email, setEmail] = useState("");
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const { confirm, confirmationDialog } = useConfirmDialog();
   useEffect(
     () =>
       onSnapshot(
@@ -49,19 +60,42 @@ export default function AdminAccess() {
       ),
     [],
   );
+  useEffect(
+    () =>
+      onSnapshot(collection(db, "activity"), (snapshot) =>
+        setActivities(
+          snapshot.docs
+            .map((item) => ({ ...item.data(), id: item.id }))
+            .sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0))
+            .slice(0, 20),
+        ),
+      ),
+    [],
+  );
   async function setMemberAccess(member, active) {
     if (!isAdmin || busy || member.uid === user.uid) return;
-    if (
-      !window.confirm(
-        `${active ? "Approve" : "Revoke"} workspace access for ${member.email}?`,
-      )
-    )
-      return;
+    const memberIsAdmin = admins.some((admin) => admin.uid === member.uid);
+    if (!(await confirm({
+      title: active ? "Approve team member?" : "Revoke workspace access?",
+      message: active
+        ? `${member.email} will be able to use the sales workspace.`
+        : `${member.email} will be signed out of the workspace.${memberIsAdmin ? " Their administrator role will also be removed." : ""}`,
+      confirmLabel: active ? "Approve access" : "Revoke access",
+      danger: !active,
+      success: active,
+    }))) return;
     setBusy(true);
     setError("");
     setNotice("");
     try {
-      await updateDoc(doc(db, "users", member.uid), { active });
+      const batch = writeBatch(db);
+      batch.update(doc(db, "users", member.uid), { active });
+      if (!active && memberIsAdmin) batch.delete(doc(db, "admins", member.uid));
+      await batch.commit();
+      void recordActivity(user, active ? "member.approved" : "member.revoked", {
+        email: member.email,
+        removedAdmin: !active && memberIsAdmin,
+      });
       setNotice(active ? "Team access approved." : "Team access revoked.");
     } catch {
       setError("Could not change team access. Please try again.");
@@ -73,13 +107,18 @@ export default function AdminAccess() {
     event.preventDefault();
     const address = email.trim().toLowerCase();
     if (!isAdmin || busy) return;
-    if (!window.confirm(`Grant full admin access to ${address}?`)) return;
+    if (!(await confirm({
+      title: "Grant administrator access?",
+      message: `${address} will be able to manage people, reports, inventory, expenses, and sales records.`,
+      confirmLabel: "Grant admin access",
+    }))) return;
     setBusy(true);
     setError("");
     setNotice("");
     try {
       const { grantAdminByEmail } = await import("../services/adminAccess.js");
       await grantAdminByEmail(address);
+      void recordActivity(user, "admin.granted", { email: address });
       setEmail("");
       setNotice("Admin access granted.");
     } catch (failure) {
@@ -97,12 +136,20 @@ export default function AdminAccess() {
   }
   async function remove(admin) {
     if (!isAdmin || busy || admin.uid === user.uid) return;
-    if (!window.confirm(`Remove admin access for ${admin.email}?`)) return;
+    if (!(await confirm({
+      title: "Remove administrator access?",
+      message: `${admin.email} will remain an approved team member but will lose management access.`,
+      confirmLabel: "Remove admin",
+      danger: true,
+    }))) return;
     setBusy(true);
     setError("");
     setNotice("");
     try {
-      await deleteDoc(doc(db, "admins", admin.uid));
+      const batch = writeBatch(db);
+      batch.delete(doc(db, "admins", admin.uid));
+      await batch.commit();
+      void recordActivity(user, "admin.removed", { email: admin.email });
       setNotice("Admin access removed.");
     } catch {
       setError("Could not remove access. Please try again.");
@@ -112,6 +159,7 @@ export default function AdminAccess() {
   }
   return (
     <div className="space-y-6">
+      {confirmationDialog}
       <div className="page-hero">
         <h2 className="flex items-center gap-3 text-2xl font-semibold">
           <FaUserShield aria-hidden="true" />
@@ -158,23 +206,43 @@ export default function AdminAccess() {
                     {member.uid === user.uid ? " (you)" : ""}
                   </p>
                   <p
-                    className={`mt-1 text-xs font-medium ${active ? "text-emerald-700" : "text-amber-700"}`}
+                    className={`mt-1 inline-flex rounded-full px-2 py-1 text-xs font-semibold ${active ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}
                   >
                     {active ? "Approved" : "Awaiting approval"}
                   </p>
                 </div>
                 {member.uid !== user.uid && (
                   <button
-                    className="btn-secondary w-full justify-center sm:w-36"
+                    className={`${active ? "btn-danger" : "btn-success"} w-full justify-center sm:w-40`}
                     disabled={busy}
                     onClick={() => setMemberAccess(member, !active)}
                   >
+                    {active ? <FaBan aria-hidden="true" /> : <FaCheck aria-hidden="true" />}
                     {active ? "Revoke access" : "Approve access"}
                   </button>
                 )}
               </div>
             );
           })}
+      </section>
+      <section className="panel space-y-4">
+        <div>
+          <h3 className="font-semibold">Recent activity</h3>
+          <p className="mt-1 text-sm text-slate-500">The latest access and sales changes.</p>
+        </div>
+        {!activities.length ? (
+          <p className="border-t border-slate-100 pt-4 text-sm text-slate-500">No activity recorded yet.</p>
+        ) : (
+          activities.map((activity) => (
+            <div key={activity.id} className="grid gap-1 border-t border-slate-100 pt-4 sm:grid-cols-[1fr_auto]">
+              <div>
+                <p className="text-sm font-medium">{activity.action.replaceAll(".", " ")}</p>
+                <p className="text-xs text-slate-500">{activity.actorEmail}</p>
+              </div>
+              <time className="text-xs text-slate-400">{displayTimestamp(activity.createdAt)}</time>
+            </div>
+          ))
+        )}
       </section>
       <form className="panel space-y-4" onSubmit={save}>
         <div className="flex items-center gap-3">
@@ -224,7 +292,7 @@ export default function AdminAccess() {
               </div>
               {admin.uid !== user.uid && (
                 <button
-                  className="btn-secondary w-full justify-center text-red-700 sm:w-36"
+                  className="btn-danger w-full justify-center sm:w-40"
                   disabled={busy}
                   onClick={() => remove(admin)}
                   aria-label={`Remove admin ${admin.email || "administrator"}`}

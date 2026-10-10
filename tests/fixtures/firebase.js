@@ -33,6 +33,10 @@ export const signInWithPopup = signInWithEmailAndPassword;
 const path = (_db, ...parts) => parts.join("/");
 export const doc = path,
   collection = path;
+export const serverTimestamp = () => ({
+  seconds: Math.floor(Date.now() / 1000),
+  toDate: () => new Date(),
+});
 let sequence = 0;
 const store = new Map();
 window.__testReads = [];
@@ -74,7 +78,9 @@ export async function getDocs(reference) {
   await wait();
   if (!store.has(reference)) {
     const rows =
-      reference === "users"
+      reference.includes("/history")
+        ? []
+        : reference === "users"
         ? [
             { id: "test-user", email: "admin@abc.com" },
             { id: "another-user", email: "manager@example.com" },
@@ -151,12 +157,22 @@ export function writeBatch() {
     set(reference, data) {
       writes.push({ reference, data });
     },
+    update(reference, data) {
+      writes.push({ reference, data, update: true });
+    },
+    delete(reference) {
+      writes.push({ reference, remove: true });
+    },
     async commit() {
       await wait();
       for (const write of writes) {
-        store.set(write.reference, write.data);
+        if (write.remove) store.set(write.reference, null);
+        else if (write.update)
+          store.set(write.reference, { ...(store.get(write.reference) || {}), ...write.data });
+        else store.set(write.reference, write.data);
         window.__testWrites.push(write);
       }
+      roleListeners.forEach((notify) => notify());
     },
   };
 }
@@ -171,7 +187,9 @@ export function onSnapshot(reference, next) {
     const own = store.has("admins/test-user")
       ? store.get("admins/test-user")
       : initial;
-    if (reference === "users") {
+    if (reference === "activity") {
+      next({ docs: [] });
+    } else if (reference === "users") {
       next({
         docs: [
           {

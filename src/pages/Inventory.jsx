@@ -14,13 +14,13 @@ import {
   collection,
   doc,
   getDocs,
-  addDoc,
-  updateDoc,
-  deleteDoc,
+  writeBatch,
 } from "../services/firebaseDb";
 import { shops } from "../lib/shops";
 import { stockLeft, validateStock } from "../lib/inventory";
 import LoadingSpinner from "../components/common/LoadingSpinner/LoadingSpinner";
+import { useAuth } from "../context/auth";
+import { recordActivity } from "../services/activity";
 const units = ["pcs", "kg", "g", "L", "ml", "box", "bag", "pack"];
 const quantities = ["open", "buy", "waste", "sold"];
 const blank = { name: "", unit: "pcs", open: "", buy: "", waste: "", sold: "" };
@@ -31,6 +31,7 @@ const labels = {
   sold: "Sold",
 };
 export default function InventoryPage() {
+  const { user } = useAuth();
   const [shop, setShop] = useState(shops[0].name),
     [items, setItems] = useState([]);
   const [draft, setDraft] = useState(blank),
@@ -128,7 +129,10 @@ export default function InventoryPage() {
     };
     try {
       if (existing) {
-        await updateDoc(doc(db, "inventory", shop, "items", value.id), payload);
+        const batch = writeBatch(db);
+        batch.update(doc(db, "inventory", shop, "items", value.id), payload);
+        await batch.commit();
+        void recordActivity(user, "inventory.updated", { shopName: shop, item: payload.name });
         setItems((previous) =>
           previous.map((item) =>
             item.id === value.id ? { ...item, ...payload } : item,
@@ -136,11 +140,12 @@ export default function InventoryPage() {
         );
         setEditing(null);
       } else {
-        const reference = await addDoc(
-          collection(db, "inventory", shop, "items"),
-          payload,
-        );
-        setItems((previous) => [...previous, { ...payload, id: reference.id }]);
+        const id = crypto.randomUUID();
+        const batch = writeBatch(db);
+        batch.set(doc(db, "inventory", shop, "items", id), payload);
+        await batch.commit();
+        void recordActivity(user, "inventory.created", { shopName: shop, item: payload.name });
+        setItems((previous) => [...previous, { ...payload, id }]);
         setDraft(blank);
       }
     } catch {
@@ -156,7 +161,10 @@ export default function InventoryPage() {
     setBusy(true);
     setError("");
     try {
-      await deleteDoc(doc(db, "inventory", shop, "items", item.id));
+      const batch = writeBatch(db);
+      batch.delete(doc(db, "inventory", shop, "items", item.id));
+      await batch.commit();
+      void recordActivity(user, "inventory.deleted", { shopName: shop, item: item.name });
       setItems((previous) => previous.filter((entry) => entry.id !== item.id));
       setDeleting(null);
     } catch {

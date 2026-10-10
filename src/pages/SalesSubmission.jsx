@@ -8,13 +8,14 @@ import {
   FaCheckCircle,
   FaWallet,
 } from "react-icons/fa";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   db,
   doc,
   getDoc,
   writeBatch,
+  serverTimestamp,
 } from "../services/firebaseDb";
 import { useAuth } from "../context/auth";
 import {
@@ -25,6 +26,8 @@ import {
 } from "../lib/sales";
 import { currency, documentDate, localDate } from "../lib/format";
 import ToastHandler from "../components/common/ToastHandler";
+import useConfirmDialog from "../components/common/useConfirmDialog";
+import { recordActivity } from "../services/activity";
 export default function DataSubmission({ shopName }) {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -32,6 +35,21 @@ export default function DataSubmission({ shopName }) {
     [date, setDate] = useState(localDate);
   const [errors, setErrors] = useState({}),
     [saving, setSaving] = useState(false);
+  const { confirm, confirmationDialog } = useConfirmDialog();
+  const draftKey = `amb-sales-draft:${user.uid}:${shopName}`;
+  useEffect(() => {
+    try {
+      const draft = JSON.parse(localStorage.getItem(draftKey));
+      if (draft?.data) setData({ ...emptySale(), ...draft.data });
+      if (draft?.date) setDate(draft.date);
+    } catch {
+      localStorage.removeItem(draftKey);
+    }
+  }, [draftKey]);
+  useEffect(() => {
+    const hasValues = Object.values(data).some((value) => value !== "");
+    if (hasValues) localStorage.setItem(draftKey, JSON.stringify({ data, date }));
+  }, [data, date, draftKey]);
   const totals = calculateSale(data);
   const field = (key, label, notes = false) => (
     <div key={key}>
@@ -79,14 +97,15 @@ export default function DataSubmission({ shopName }) {
         "data",
       );
       const existing = await getDoc(reference);
-      if (
-        existing.exists() &&
-        !window.confirm(
-          `Sales already exist for ${shopName} on ${date}. Replace them and keep the previous version in history?`,
-        )
-      ) {
+      if (existing.exists() && !(await confirm({
+        title: "Replace existing sales?",
+        message: `Sales already exist for ${shopName} on ${date}. The current version will be preserved in history.`,
+        confirmLabel: "Replace sales",
+        danger: true,
+      }))) {
         return;
       }
+      const revisionId = crypto.randomUUID();
       const payload = {
         ...Object.fromEntries(
           Object.entries(data).map(([key, value]) => [key, Number(value)]),
@@ -94,10 +113,8 @@ export default function DataSubmission({ shopName }) {
         ...totals,
         shopName,
         submittedBy: user.email,
-        submissionDate:
-          documentDate(localDate()) +
-          " " +
-          new Date().toTimeString().slice(0, 8),
+        submissionDate: serverTimestamp(),
+        revisionId,
       };
       const batch = writeBatch(db);
       if (existing.exists()) {
@@ -106,32 +123,49 @@ export default function DataSubmission({ shopName }) {
           "shops",
           shopName,
           documentDate(date),
+          "data",
           "history",
-          crypto.randomUUID(),
+          revisionId,
         );
         batch.set(historyReference, {
           previous: existing.data(),
           replacedBy: user.email,
-          replacedAt: new Date().toISOString(),
+          replacedAt: serverTimestamp(),
         });
       }
       batch.set(reference, payload);
       await batch.commit();
+      void recordActivity(user, existing.exists() ? "sales.replaced" : "sales.created", {
+        shopName,
+        date,
+      });
+      localStorage.removeItem(draftKey);
       ToastHandler.success("Sales saved successfully.");
       navigate("/stores");
-    } catch {
+    } catch (error) {
+      console.error("Sales submission failed", error);
+      const messages = {
+        "permission-denied":
+          "Sales were not saved because Firebase denied this write. Confirm your account is approved and deploy the latest Firestore rules.",
+        unavailable:
+          "Sales were not saved because Firebase is currently unreachable. Check your connection and try again.",
+        "failed-precondition":
+          "Sales were not saved because the existing record could not be versioned. Refresh the page and try again.",
+        "invalid-argument":
+          "Sales were not saved because Firebase rejected part of the record.",
+      };
+      const code = error?.code?.replace("firestore/", "");
       ToastHandler.error(
-        "Could not save sales. Your entries are still here; please try again.",
+        messages[code] ||
+          `Could not save sales${code ? ` (${code})` : ""}. Your entries are still here; please try again.`,
       );
     } finally {
       setSaving(false);
     }
   }
   return (
-    <form
-      onSubmit={submit}
-      className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_320px]"
-    >
+    <form onSubmit={submit} className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
+      {confirmationDialog}
       <fieldset disabled={saving} className="min-w-0 space-y-6">
         <section className="panel border-t-4 border-t-violet-500">
           <SectionHeading icon={FaStore}>{shopName}</SectionHeading>

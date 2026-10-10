@@ -39,9 +39,16 @@ test("failed sales writes retain inputs and can be retried", async ({
     page.getByRole("button", { name: "Save daily sales" }),
   ).toBeEnabled();
   await page.evaluate(() => localStorage.removeItem("test-fail"));
-  page.once("dialog", (dialog) => dialog.accept());
   await page.getByRole("button", { name: "Save daily sales" }).click();
+  await page.getByRole("alertdialog").getByRole("button", { name: "Replace sales" }).click();
   await expect(page).toHaveURL(/stores/);
+});
+
+test("unfinished sales drafts survive a page reload", async ({ page }) => {
+  await page.goto("/sales/juice-hut");
+  await page.getByLabel("UPI amount").fill("345.5");
+  await page.reload();
+  await expect(page.getByLabel("UPI amount")).toHaveValue("345.5");
 });
 
 test("switching expense days in the same month does not fetch again", async ({
@@ -142,11 +149,11 @@ test("sales recalculate after POS changes and save expected document", async ({
     .locator("dl > div")
     .filter({ hasText: "Difference from POS" });
   await expect(difference).toContainText("₹50");
-  page.once("dialog", (dialog) => dialog.accept());
   await page.getByRole("button", { name: "Save daily sales" }).click();
+  await page.getByRole("alertdialog").getByRole("button", { name: "Replace sales" }).click();
   await expect(page).toHaveURL(/stores/);
   const writes = await page.evaluate(() => window.__testWrites);
-  expect(writes).toHaveLength(2);
+  expect(writes.length).toBeGreaterThanOrEqual(2);
   expect(writes[0].reference).toContain("/history/");
   expect(writes[1].data).toMatchObject({
     totalSale: 1250,
