@@ -15,6 +15,7 @@ import { useAuth } from "../../../context/auth";
 import { shops } from "../../../lib/shops";
 import LoadingSpinner from "../LoadingSpinner/LoadingSpinner";
 import ErrorBoundary from "../ErrorBoundary";
+import NotificationToggle from "../NotificationToggle";
 
 function ProfileAvatar({ user }) {
   const [imageFailed, setImageFailed] = useState(false);
@@ -170,6 +171,7 @@ export default function AppLayout() {
           <p className="px-3 pt-1 text-xs text-indigo-200/65">
             {isAdmin ? "Administrator" : "Team member"}
           </p>
+          <NotificationToggle />
           <button
             onClick={logout}
             className="mt-3 flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-sm text-indigo-100/75 hover:bg-white/10 hover:text-white"

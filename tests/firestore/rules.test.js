@@ -89,6 +89,30 @@ test("new accounts can only register themselves as pending", async () => {
   );
 });
 
+test("approved users can manage only their own notification tokens", async () => {
+  const approved = environment
+    .authenticatedContext("approved", { email: "staff@example.com" })
+    .firestore();
+  const validId = "a".repeat(64);
+  const payload = {
+    token: "a-valid-notification-token-value",
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  };
+  await assertSucceeds(
+    setDoc(doc(approved, "users", "approved", "notificationTokens", validId), payload),
+  );
+  await assertFails(
+    setDoc(doc(approved, "users", "pending", "notificationTokens", validId), payload),
+  );
+  const pending = environment
+    .authenticatedContext("pending", { email: "pending@example.com" })
+    .firestore();
+  await assertFails(
+    setDoc(doc(pending, "users", "pending", "notificationTokens", validId), payload),
+  );
+});
+
 test("anonymous and pending accounts cannot write sales", async () => {
   const path = ["shops", "The Juice Hut", "02-10-2026", "data"];
   await assertFails(

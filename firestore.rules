@@ -84,6 +84,19 @@ service cloud.firestore {
           && request.resource.data.email is string
           && request.resource.data.active is bool);
       allow delete: if admin() && uid != request.auth.uid;
+
+      match /notificationTokens/{tokenId} {
+        allow read: if signedIn() && request.auth.uid == uid;
+        allow create, update: if approved()
+          && request.auth.uid == uid
+          && tokenId.matches('^[a-f0-9]{64}$')
+          && request.resource.data.keys().hasOnly(['token', 'createdAt', 'updatedAt'])
+          && request.resource.data.token is string
+          && request.resource.data.token.size() > 20
+          && request.resource.data.createdAt == request.time
+          && request.resource.data.updatedAt == request.time;
+        allow delete: if signedIn() && request.auth.uid == uid;
+      }
     }
     match /shops/{store}/{date}/data {
       allow get: if approved();

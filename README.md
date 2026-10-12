@@ -54,6 +54,18 @@ npm run test:e2e
 npm run test:production
 ```
 
+## Sales reminder notifications
+
+Approved users can opt in from the navigation sidebar. At 9:00 PM IST, a scheduled Netlify Function checks that day's store documents and sends a browser push reminder to subscribed users who have not submitted a sales record. One reminder is sent per user and date.
+
+1. In Firebase Console, open **Project settings > Cloud Messaging > Web Push certificates** and create a key pair.
+2. Copy `.env.example` to `.env.local` and set `VITE_FIREBASE_VAPID_KEY` to the public key.
+3. In Firebase Console, open **Project settings > Service accounts**, generate a new private key, and keep the downloaded JSON private.
+4. In Netlify, add an environment variable named `FIREBASE_SERVICE_ACCOUNT_JSON`. Its value must be the complete downloaded JSON on one line. Scope it to Functions and production deploys.
+5. Deploy Firestore rules with `firebase deploy --only firestore:rules`, then deploy the site through Netlify. Push notifications require HTTPS (or localhost), and each user must press **Turn on reminders** once in each browser/device.
+
+Firebase Cloud Messaging has no charge. Netlify Scheduled Functions are available on the Free plan; the plan has a hard monthly usage limit rather than overage charges. One short daily invocation uses a very small part of that allowance. Browser permission can only be requested from a user action.
+
 Browser tests use installed Google Chrome in headless mode plus Playwright WebKit for the mobile date and chart checks. Install WebKit once with `npx playwright install webkit`. `test:e2e` uses a separate Vite configuration with an in-memory Firebase fixture; these aliases are not used by normal development or production. `test:rules` uses the Firebase Firestore emulator and requires Java 21 or newer. The tests exercise mobile and desktop navigation, route protection, approval checks, sales reconciliation and validation, inventory cancellation, expense CRUD, error recovery, and actual Excel downloads. Production smoke tests load the real built login screen at 320, 390, 768, and 1440 pixels with external requests blocked. Live sign-in and production database writes are not tested.
 
 The initial build before restructuring shipped 1,968.78 kB of JavaScript (558.94 kB gzip). The refactored login entry is approximately 459 kB (129 kB gzip); database code and Excel exports load separately. These are build-size measurements, not claims about live network latency. `dist/.vite/manifest.json` records the chunk graph.
