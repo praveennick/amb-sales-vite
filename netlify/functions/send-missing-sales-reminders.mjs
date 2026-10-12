@@ -112,4 +112,4 @@ export default async () => {
 };
 
 // Netlify cron uses UTC. 15:30 UTC is 21:00 Asia/Kolkata.
-export const config = { schedule: "*/5 * * * *" };
+export const config = { schedule: "*/1 * * * *" };
