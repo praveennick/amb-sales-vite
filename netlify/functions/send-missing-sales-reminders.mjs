@@ -70,12 +70,25 @@ export default async () => {
 
     const marker = db.doc(`notificationReminders/${date}_${snapshot.id}`);
     if ((await marker.get()).exists) continue;
+    const shortStoreNames = {
+      "The Juice Hut": "Juice Hut",
+      "Bubble Tea N Cotton Candy": "Bubble Tea",
+      "Coffee N Candy": "Coffee Shop",
+    };
+    const missingNames = missingStores
+      .map((store) => shortStoreNames[store] || store)
+      .join(", ");
     const response = await getMessaging(app).sendEachForMulticast({
       tokens: tokens.map(({ token }) => token),
       webpush: {
         notification: {
-          title: "Sales entry reminder",
-          body: `Sales are still missing for ${missingStores.join(", ")}. Please update today's sales.`,
+          title: "🔴 SALES NOT ENTERED",
+          body: `Tap here and enter today's sales now: ${missingNames}.`,
+          icon: "/favicon.ico",
+          badge: "/favicon.ico",
+          tag: "amb-sales-reminder",
+          renotify: true,
+          requireInteraction: true,
           data: { link: "/stores" },
         },
       },
@@ -112,4 +125,4 @@ export default async () => {
 };
 
 // Netlify cron uses UTC. 15:30 UTC is 21:00 Asia/Kolkata.
-export const config = { schedule: "*/1 * * * *" };
+export const config = { schedule: "30 15 * * *" };
